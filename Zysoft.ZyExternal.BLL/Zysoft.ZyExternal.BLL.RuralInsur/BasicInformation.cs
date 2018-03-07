@@ -13,7 +13,7 @@ namespace Zysoft.ZyExternal.BLL.RuralInsur
         #region A001 获取病人信息函数获取病人信息函数
         /// <summary>
         ///  A001 获取病人信息函数获取病人信息函数
-        /// </summary>
+        /// </summary> 
         /// <param name="bookno"></param>
         /// <param name="operater"></param>
         /// <param name="outParm"></param>
