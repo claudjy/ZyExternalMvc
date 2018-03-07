@@ -16,7 +16,7 @@ namespace Zysoft.ZyExternal.BLL.RuralInsur
 
         #region B002 住院登记（扩展函数）
         /// <summary>
-        /// B002 住院登记（扩展函数）6
+        /// B002 住院登记（扩展函数）7
         /// </summary>
         /// <param name="rateType"></param>
         /// <param name="residenceNo"></param>
