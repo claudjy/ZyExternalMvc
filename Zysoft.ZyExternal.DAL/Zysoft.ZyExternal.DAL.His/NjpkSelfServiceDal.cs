@@ -36,107 +36,172 @@ namespace Zysoft.ZyExternal.DAL.His
         {
              
             UtilityDAL utilityDAL = new UtilityDAL();
-            XmlDocument docResponseXuan = utilityDAL.GetResponseXuanQueryXmlDoc();
-            XmlNode ndResponseXuan = docResponseXuan.SelectSingleNode("response");
-            XmlNode ndResponseResultXuan = docResponseXuan.SelectSingleNode("response/result");
+            XmlDocument docResponseRoot = utilityDAL.GetResponseNjpkQueryXmlDoc();
+            XmlNode ndResponseRoot = docResponseRoot.SelectSingleNode("root");
 
-            XmlNode ndResponseItemXuan = docResponseXuan.CreateElement("item");
-            ndResponseResultXuan.AppendChild(ndResponseItemXuan);
+            string nameEmployeNo, clientType, siType;
+            string sMoney;
+            string tradeCode = "2131";
+            XmlNode ndroot = docRequestPre.SelectSingleNode("/root");
+            nameEmployeNo = ndroot.SelectSingleNode("operName").InnerText;
+            clientType = "25";
 
-            string nameEmployeNo, clientType;
-            string tradeCode = "2134";
-            nameEmployeNo = docRequestPre.SelectSingleNode("/request/operid").InnerText;
-            clientType = docRequestPre.SelectSingleNode("/request/partner").InnerText;
-            XmlNode ndParams = docRequestPre.SelectSingleNode("/request/params");
-
-            string patientName, birthday, sex, mobileNo, address, idCardNo;
-            patientName = ndParams.SelectSingleNode("hzxm").InnerText;
-            birthday = ndParams.SelectSingleNode("birth").InnerText;
-            sex = ndParams.SelectSingleNode("sex").InnerText;
-            if (sex == "男")
-                sex = "0";
-            else
-                sex = "1";
-            mobileNo = ndParams.SelectSingleNode("lxdh").InnerText;
-            address = ndParams.SelectSingleNode("lxdz").InnerText;
-            idCardNo = ndParams.SelectSingleNode("sfzh").InnerText;
-            //=========================================================
-            XmlDocument docRequest = utilityDAL.GetRequestXmlDoc();
-            XmlNode ndRequest = docRequest.SelectSingleNode("Request");
-            ndRequest.SelectSingleNode("TradeCode").InnerText = tradeCode;
-            ndRequest.SelectSingleNode("ExtUserID").InnerText = nameEmployeNo;
-
-            XmlElement eleBankCardNo = docRequest.CreateElement("BankCardNo");
-            eleBankCardNo.InnerText = "";
-            ndRequest.AppendChild(eleBankCardNo);
-
-            XmlElement elePatientName = docRequest.CreateElement("PatientName");
-            elePatientName.InnerText = patientName;
-            ndRequest.AppendChild(elePatientName);
-
-            XmlElement eleBirthday = docRequest.CreateElement("Birthday");
-            eleBirthday.InnerText = birthday;
-            ndRequest.AppendChild(eleBirthday);
-
-            XmlElement eleSex = docRequest.CreateElement("Sex");
-            eleSex.InnerText = sex;
-            ndRequest.AppendChild(eleSex);
-
-            XmlElement eleAge = docRequest.CreateElement("Age");
-            eleAge.InnerText = sex;
-            ndRequest.AppendChild(eleAge);
-
-            XmlElement eleMobileNo = docRequest.CreateElement("MobileNo");
-            eleMobileNo.InnerText = mobileNo;
-            ndRequest.AppendChild(eleMobileNo);
-
-            XmlElement eleIDCardNo = docRequest.CreateElement("IDCardNo");
-            eleIDCardNo.InnerText = idCardNo;
-            ndRequest.AppendChild(eleIDCardNo);
-
-            XmlElement eleAddress = docRequest.CreateElement("Address");
-            eleAddress.InnerText = address;
-            ndRequest.AppendChild(eleAddress);
-
-            XmlElement eleBankDate = docRequest.CreateElement("BankDate");
-            eleBankDate.InnerText = DateTime.Now.ToString("yyyyMMddhhmmss");
-            ndRequest.AppendChild(eleBankDate);
-
-            XmlElement eleBankTradeNo = docRequest.CreateElement("BankTradeNo");
-            eleBankTradeNo.InnerText = address;
-            ndRequest.AppendChild(eleBankTradeNo);
-            
-            //========================================================
-
-
-
+            string name, birthday, sexCode,sexName, mobileNo, address, idCardNo;
+            string cardNo, cardNoType;
             try
             {
+                cardNo = ndroot.SelectSingleNode("cardNo").InnerText;
+                cardNoType = ndroot.SelectSingleNode("cardNoType").InnerText;
+                name = ndroot.SelectSingleNode("name").InnerText;
+                birthday = ndroot.SelectSingleNode("birthday").InnerText;
+                sexCode = ndroot.SelectSingleNode("sexCode").InnerText;
+                sexName = ndroot.SelectSingleNode("sexName").InnerText;
+
+                sMoney = ndroot.SelectSingleNode("money").InnerText;
+                if (!sMoney.IsFloat())
+                {
+                    ndResponseRoot.SelectSingleNode("appCode").InnerText = "9999";
+                    ndResponseRoot.SelectSingleNode("errorMsg").InnerText = "金额必须为数字！";
+                    outParm = ndResponseRoot.OuterXml;
+                    return -1;
+                }
+                if (sMoney.Trim().IsNull()) sMoney = "0.0";
+                double money;
+                money = sMoney.To<double>();
+
+                switch (cardNoType)
+                {
+                    case "01": //需要收费
+                        if (money < 5)
+                        {
+                            ndResponseRoot.SelectSingleNode("appCode").InnerText = "0";
+                            ndResponseRoot.SelectSingleNode("errorMsg").InnerText = "卡需要收费， 请录入要的金额！";
+                            outParm = docResponseRoot.OuterXml;
+                            return -1;
+                        }
+                        money = money - 5;
+                        break;
+                    default:
+                        break;
+
+                }
+                if (sexCode == "M")
+                    sexCode = "0";
+                else
+                    sexCode = "1";
+                mobileNo = ndroot.SelectSingleNode("homeTel").InnerText;
+                address = ndroot.SelectSingleNode("home").InnerText;
+                idCardNo = ndroot.SelectSingleNode("idenNo").InnerText;
+                siType = ndroot.SelectSingleNode("siType").InnerText;
+                //=========================================================
+                XmlDocument docRequest = utilityDAL.GetRequestXmlDoc();
+                XmlNode ndRequest = docRequest.SelectSingleNode("Request");
+                ndRequest.SelectSingleNode("TradeCode").InnerText = tradeCode;
+                ndRequest.SelectSingleNode("ExtUserID").InnerText = nameEmployeNo;
+
+                XmlElement elePayCardNo = docRequest.CreateElement("PayCardNo");
+                elePayCardNo.InnerText = cardNo;
+                ndRequest.AppendChild(elePayCardNo);
+
+                XmlElement elePatientName = docRequest.CreateElement("PatientName");
+                elePatientName.InnerText = name;
+                ndRequest.AppendChild(elePatientName);
+
+                XmlElement eleSex = docRequest.CreateElement("Sex");
+                eleSex.InnerText = sexCode;
+                ndRequest.AppendChild(eleSex);
+
+                XmlElement eleBirthday = docRequest.CreateElement("Birthday");
+                eleBirthday.InnerText = birthday;
+                ndRequest.AppendChild(eleBirthday);
+
+                XmlElement eleAge = docRequest.CreateElement("Age");
+                eleAge.InnerText = "0";
+                ndRequest.AppendChild(eleAge);
+
+                XmlElement eleMobileNo = docRequest.CreateElement("MobileNo");
+                eleMobileNo.InnerText = mobileNo;
+                ndRequest.AppendChild(eleMobileNo);
+
+                XmlElement eleAddress = docRequest.CreateElement("Address");
+                eleAddress.InnerText = address;
+                ndRequest.AppendChild(eleAddress);
+
+                XmlElement eleIDCardNo = docRequest.CreateElement("IDCardNo");
+                eleIDCardNo.InnerText = idCardNo;
+                ndRequest.AppendChild(eleIDCardNo);
+
+                XmlElement eleMoney = docRequest.CreateElement("Money");
+                eleMoney.InnerText = money.ToString();
+                ndRequest.AppendChild(eleMoney);
+
+                XmlElement elePayType = docRequest.CreateElement("PayType");
+                elePayType.InnerText = "1";
+                ndRequest.AppendChild(elePayType);
+
+                XmlElement eleBankCardNo = docRequest.CreateElement("BankCardNo");
+                eleBankCardNo.InnerText = "";
+                ndRequest.AppendChild(eleBankCardNo);
+
+                XmlElement eleBankTradeNo = docRequest.CreateElement("BankTradeNo");
+                eleBankTradeNo.InnerText = "";
+                ndRequest.AppendChild(eleBankTradeNo);
+
+
+                XmlElement eleBankDate = docRequest.CreateElement("BankDate");
+                eleBankDate.InnerText = DateTime.Now.ToString("yyyyMMddhhmmss");
+                ndRequest.AppendChild(eleBankDate);
+
+                XmlElement eleNotes = docRequest.CreateElement("Notes");
+                eleNotes.InnerText = "";
+                ndRequest.AppendChild(eleNotes);
+
+                XmlElement eleCaseDeductFee = docRequest.CreateElement("CaseDeductFee");
+                eleCaseDeductFee.InnerText = "";
+                ndRequest.AppendChild(eleCaseDeductFee);
+
+                XmlElement eleRateType = docRequest.CreateElement("RateType");
+                eleRateType.InnerText = siType;
+                ndRequest.AppendChild(eleRateType);
+
+
+                //========================================================
+
+
+
+
                 HisWSSelfService hisWSSelfService = new HisWSSelfService();
                 hisWSSelfService.Url = serviceURL;
                 outParm = hisWSSelfService.BankService(ndRequest.OuterXml);
                 XmlDocument docResponse = new XmlDocument();
                 docResponse.LoadXml(outParm);
                 XmlNode ndResponse = docResponse.SelectSingleNode("Response");
+                string resultCode, resultMessage;
 
-                XmlElement elePatid = docResponseXuan.CreateElement("patid");
-                elePatid.InnerText = ndResponse.SelectSingleNode("PatientID").InnerText;
-                ndResponseItemXuan.AppendChild(elePatid);
+                resultCode = ndResponse.SelectSingleNode("ResultCode").InnerText;
+                resultMessage = ndResponse.SelectSingleNode("ResultContent").InnerText;
 
-                XmlElement eleblh = docResponseXuan.CreateElement("blh");
-                eleblh.InnerText = "";
-                ndResponseItemXuan.AppendChild(eleblh);
+                if (resultCode != "0000")
+                {
+                    ndResponseRoot.SelectSingleNode("appCode").InnerText = resultCode;
+                    ndResponseRoot.SelectSingleNode("errorMsg").InnerText = resultMessage;
+                    outParm = docResponseRoot.OuterXml;
+                    return -1;
+                }
+                XmlElement elepatientId = docResponseRoot.CreateElement("patientId");
+                elepatientId.InnerText = ndResponse.SelectSingleNode("PatientID").InnerText;
+                ndResponseRoot.AppendChild(elepatientId);
 
-                ndResponseXuan.SelectSingleNode("resultCode").InnerText = ndResponse.SelectSingleNode("ResultCode").InnerText;
-                ndResponseXuan.SelectSingleNode("resultMessage").InnerText = ndResponse.SelectSingleNode("ResultContent").InnerText;
+                ndResponseRoot.SelectSingleNode("appCode").InnerText = resultCode;
+                ndResponseRoot.SelectSingleNode("errorMsg").InnerText = resultMessage;
 
-                outParm = ndResponseXuan.OuterXml;
+                outParm = docResponseRoot.OuterXml;
             }
             catch (Exception ex)
             {
-                ndResponseXuan.SelectSingleNode("resultCode").InnerText = "9999";
-                ndResponseXuan.SelectSingleNode("resultMessage").InnerText = ex.Message;
-                outParm = ndResponseXuan.OuterXml;
+                ndResponseRoot.SelectSingleNode("appCode").InnerText = "9999";
+                ndResponseRoot.SelectSingleNode("errorMsg").InnerText = ex.Message;
+                outParm = docResponseRoot.OuterXml;
                 Log4NetHelper.Error("2134 无卡建档", ex);
                 return -1;
             }

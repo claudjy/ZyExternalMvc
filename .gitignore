@@ -1,5 +1,6 @@
 # git ignore files 
 Thumbs.db
+Web.config
 *.obj
 *.exe
 *.pdb
