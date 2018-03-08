@@ -165,6 +165,10 @@
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="WebServices\NjpkSelfService.asmx.cs">
+      <DependentUpon>NjpkSelfService.asmx</DependentUpon>
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="WebServices\WSDHCRis.asmx.cs">
       <DependentUpon>WSDHCRis.asmx</DependentUpon>
       <SubType>Component</SubType>
@@ -195,6 +199,7 @@
       <DependentUpon>Web.config</DependentUpon>
     </Content>
     <Content Include="Views\Web.config" />
+    <Content Include="WebServices\NjpkSelfService.asmx" />
     <Content Include="WebServices\WSDHCRis.asmx" />
     <Content Include="WebServices\WSRuralInsur.asmx" />
     <Content Include="WebServices\WSXuanchengCity.asmx" />

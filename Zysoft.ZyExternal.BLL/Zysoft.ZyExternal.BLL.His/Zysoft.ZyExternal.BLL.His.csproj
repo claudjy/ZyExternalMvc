@@ -41,6 +41,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DHCRis.cs" />
+    <Compile Include="NjpkSelfService.cs" />
     <Compile Include="PreXuanchengCity.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
