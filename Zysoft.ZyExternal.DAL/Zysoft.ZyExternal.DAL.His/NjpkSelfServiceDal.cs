@@ -209,5 +209,264 @@ namespace Zysoft.ZyExternal.DAL.His
         }
         #endregion
 
+        #region 判断自助机当前是否可挂号
+        /// <summary>
+        /// 判断自助机当前是否可挂号
+        /// </summary>
+        /// <param name="docRequest"></param>
+        /// <param name="outParm"></param>
+        /// <returns></returns> 
+        public int CanRegister(XmlDocument docRequestPre, out string outParm)
+        {
+
+            UtilityDAL utilityDAL = new UtilityDAL();
+            XmlDocument docResponseRoot = utilityDAL.GetResponseNjpkQueryXmlDoc();
+            XmlNode ndResponseRoot = docResponseRoot.SelectSingleNode("root");
+            XmlNode ndroot = docRequestPre.SelectSingleNode("/root");
+
+            string clientType, tradeCode = "2305";
+            clientType = "25";
+            string cardNo, departmentId, expertId, registerClassId, registerTypeId;
+            string seeTime, machineLocation, speciDisea, typeId;
+
+            string departmentCode, doctorCode;
+            string startDate, endDate, sessionCode;
+            try
+            {
+                cardNo = ndroot.SelectSingleNode("cardNo").InnerText;
+                departmentCode = ndroot.SelectSingleNode("departmentId").InnerText;
+                doctorCode  = ndroot.SelectSingleNode("expertId").InnerText;
+                seeTime = ndroot.SelectSingleNode("seeTime").InnerText;
+                speciDisea = ndroot.SelectSingleNode("speciDisea").InnerText;
+                typeId = ndroot.SelectSingleNode("typeId").InnerText;
+                machineLocation = ndroot.SelectSingleNode("machineLocation").InnerText;
+                registerTypeId = ndroot.SelectSingleNode("registerTypeId").InnerText;
+               
+                //=========================================================
+                XmlDocument docRequest = utilityDAL.GetRequestXmlDoc();
+                XmlNode ndRequest = docRequest.SelectSingleNode("Request");
+                ndRequest.SelectSingleNode("TradeCode").InnerText = tradeCode;
+                ndRequest.SelectSingleNode("ExtUserID").InnerText = "";
+                ndRequest.SelectSingleNode("ClientType").InnerText = clientType;
+
+                DateTime dtNow;
+                dtNow = DateTime.Now;
+
+               
+                startDate = dtNow.ToString("yyyy-mm-dd");
+                endDate = dtNow.ToString("yyyy-mm-dd");
+                if (seeTime == "1")
+                {
+                    sessionCode = "S";
+                }
+                else
+                {
+                    sessionCode = "X";
+                }
+
+                XmlElement eleStartDate = docRequest.CreateElement("StartDate");
+                eleStartDate.InnerText = startDate;
+                ndRequest.AppendChild(eleStartDate);
+
+                XmlElement eleEndDate = docRequest.CreateElement("EndDate");
+                eleEndDate.InnerText = endDate;
+                ndRequest.AppendChild(eleEndDate);
+
+                XmlElement eleSessionCode = docRequest.CreateElement("SessionCode");
+                eleSessionCode.InnerText = sessionCode;
+                ndRequest.AppendChild(eleSessionCode);
+
+                XmlElement eleDepartmentCode = docRequest.CreateElement("DepartmentCode");
+                eleDepartmentCode.InnerText = departmentCode;
+                ndRequest.AppendChild(eleDepartmentCode);
+
+                XmlElement eleDoctor = docRequest.CreateElement("Doctor");
+                eleDoctor.InnerText = "";
+                ndRequest.AppendChild(eleDoctor);
+
+                XmlElement eleDoctorCode = docRequest.CreateElement("DoctorCode");
+                eleDoctorCode.InnerText = doctorCode;
+                ndRequest.AppendChild(eleDoctorCode);
+                
+                //========================================================
+
+
+
+
+                HisWSSelfService hisWSSelfService = new HisWSSelfService();
+                hisWSSelfService.Url = serviceURL;
+                outParm = hisWSSelfService.BankService(ndRequest.OuterXml);
+                XmlDocument docResponse = new XmlDocument();
+                docResponse.LoadXml(outParm);
+                XmlNode ndResponse = docResponse.SelectSingleNode("Response");
+                string resultCode, resultMessage;
+
+                resultCode = ndResponse.SelectSingleNode("ResultCode").InnerText;
+                resultMessage = ndResponse.SelectSingleNode("ResultContent").InnerText;
+
+                XmlElement eleoutRegister = docResponseRoot.CreateElement("outRegister");
+                eleoutRegister.InnerText = "0";
+                ndroot.AppendChild(eleoutRegister);
+
+                if (resultCode != "0000")
+                {
+                    ndroot.SelectSingleNode("appCode").InnerText = resultCode;
+                    ndResponseRoot.SelectSingleNode("errorMsg").InnerText = resultMessage;
+                    outParm = docResponseRoot.OuterXml;
+                    return -1;
+                }                
+
+
+                long cycleNum;
+                cycleNum = long.Parse(docResponse.SelectSingleNode("Response/CycleNum").InnerText);
+                if (cycleNum <= 0)
+                {
+                    ndResponseRoot.SelectSingleNode("appCode").InnerText = "0000";
+                    ndResponseRoot.SelectSingleNode("errorMsg").InnerText = "交易成功！";
+                    outParm = docResponseRoot.OuterXml;
+                    return -1;
+                }
+
+                eleoutRegister.InnerText = "1";
+                ndResponseRoot.SelectSingleNode("appCode").InnerText = resultCode;
+                ndResponseRoot.SelectSingleNode("errorMsg").InnerText = resultMessage;
+
+                outParm = docResponseRoot.OuterXml;
+            }
+            catch (Exception ex)
+            {
+                ndResponseRoot.SelectSingleNode("appCode").InnerText = "9999";
+                ndResponseRoot.SelectSingleNode("errorMsg").InnerText = ex.Message;
+                outParm = docResponseRoot.OuterXml;
+                Log4NetHelper.Error("判断自助机当前是否可挂号", ex);
+                return -1;
+            }
+            return 0;
+        }
+        #endregion
+
+
+        #region 判断当前号别是否可挂号
+        /// <summary>
+        /// 判断当前号别是否可挂号
+        /// </summary>
+        /// <param name="docRequest"></param>
+        /// <param name="outParm"></param>
+        /// <returns></returns> 
+        public int CanRegisterType(XmlDocument docRequestPre, out string outParm)
+        {
+
+            UtilityDAL utilityDAL = new UtilityDAL();
+            XmlDocument docResponseRoot = utilityDAL.GetResponseNjpkQueryXmlDoc();
+            XmlNode ndResponseRoot = docResponseRoot.SelectSingleNode("root");
+
+            string clientType, tradeCode = "2305";
+            clientType = "25";
+
+            try
+            {
+
+                //=========================================================
+                XmlDocument docRequest = utilityDAL.GetRequestXmlDoc();
+                XmlNode ndRequest = docRequest.SelectSingleNode("Request");
+                ndRequest.SelectSingleNode("TradeCode").InnerText = tradeCode;
+                ndRequest.SelectSingleNode("ExtUserID").InnerText = "";
+                ndRequest.SelectSingleNode("ClientType").InnerText = clientType;
+
+                DateTime dtNow;
+                dtNow = DateTime.Now;
+
+                string startDate, endDate, sessionCode;
+                startDate = dtNow.ToString("yyyy-mm-dd");
+                endDate = dtNow.ToString("yyyy-mm-dd");
+                if (int.Parse(dtNow.ToString("HH")) < 13)
+                {
+                    sessionCode = "S";
+                }
+                else
+                {
+                    sessionCode = "X";
+                }
+
+                XmlElement eleStartDate = docRequest.CreateElement("StartDate");
+                eleStartDate.InnerText = startDate;
+                ndRequest.AppendChild(eleStartDate);
+
+                XmlElement eleEndDate = docRequest.CreateElement("EndDate");
+                eleEndDate.InnerText = endDate;
+                ndRequest.AppendChild(eleEndDate);
+
+                XmlElement eleSessionCode = docRequest.CreateElement("SessionCode");
+                eleSessionCode.InnerText = sessionCode;
+                ndRequest.AppendChild(eleSessionCode);
+
+                XmlElement eleDepartmentCode = docRequest.CreateElement("DepartmentCode");
+                eleDepartmentCode.InnerText = "";
+                ndRequest.AppendChild(eleDepartmentCode);
+
+                XmlElement eleDoctor = docRequest.CreateElement("Doctor");
+                eleDoctor.InnerText = "";
+                ndRequest.AppendChild(eleDoctor);
+
+                XmlElement eleDoctorCode = docRequest.CreateElement("DoctorCode");
+                eleDoctorCode.InnerText = "";
+                ndRequest.AppendChild(eleDoctorCode);
+
+                //========================================================
+
+
+
+
+                HisWSSelfService hisWSSelfService = new HisWSSelfService();
+                hisWSSelfService.Url = serviceURL;
+                outParm = hisWSSelfService.BankService(ndRequest.OuterXml);
+                XmlDocument docResponse = new XmlDocument();
+                docResponse.LoadXml(outParm);
+                XmlNode ndResponse = docResponse.SelectSingleNode("Response");
+                string resultCode, resultMessage;
+
+                resultCode = ndResponse.SelectSingleNode("ResultCode").InnerText;
+                resultMessage = ndResponse.SelectSingleNode("ResultContent").InnerText;
+
+                XmlElement eleoutRegister = docResponseRoot.CreateElement("outRegister");
+                eleoutRegister.InnerText = "0";
+                ndResponseRoot.AppendChild(eleoutRegister);
+
+                if (resultCode != "0000")
+                {
+                    ndResponseRoot.SelectSingleNode("appCode").InnerText = resultCode;
+                    ndResponseRoot.SelectSingleNode("errorMsg").InnerText = resultMessage;
+                    outParm = docResponseRoot.OuterXml;
+                    return -1;
+                }
+
+
+                long cycleNum;
+                cycleNum = long.Parse(docResponse.SelectSingleNode("Response/CycleNum").InnerText);
+                if (cycleNum <= 0)
+                {
+                    ndResponseRoot.SelectSingleNode("appCode").InnerText = "0000";
+                    ndResponseRoot.SelectSingleNode("errorMsg").InnerText = "交易成功！";
+                    outParm = docResponseRoot.OuterXml;
+                    return -1;
+                }
+
+                eleoutRegister.InnerText = "1";
+                ndResponseRoot.SelectSingleNode("appCode").InnerText = resultCode;
+                ndResponseRoot.SelectSingleNode("errorMsg").InnerText = resultMessage;
+
+                outParm = docResponseRoot.OuterXml;
+            }
+            catch (Exception ex)
+            {
+                ndResponseRoot.SelectSingleNode("appCode").InnerText = "9999";
+                ndResponseRoot.SelectSingleNode("errorMsg").InnerText = ex.Message;
+                outParm = docResponseRoot.OuterXml;
+                Log4NetHelper.Error("判断当前号别是否可挂号", ex);
+                return -1;
+            }
+            return 0;
+        }
+        #endregion
     }
 }
