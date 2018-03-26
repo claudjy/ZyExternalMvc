@@ -59,6 +59,7 @@
     <Compile Include="PreXuanchengCityDal.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RemoteService\HisWSSelfService.cs" />
+    <Compile Include="RemoteService\SlowSfqUploadService.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Zysoft.FrameWork\Zysoft.FrameWork.csproj">

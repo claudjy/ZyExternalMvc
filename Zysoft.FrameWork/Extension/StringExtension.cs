@@ -1465,12 +1465,12 @@ namespace Zysoft.FrameWork
         /// <returns></returns>
         public static byte[] GetByteArrayFromString(string strline)
         {
-            return Encoding.GetEncoding("gb2312").GetBytes(strline);
+            return Encoding.GetEncoding("gbk").GetBytes(strline);
         }
 
         public static string BytesToString(byte[] bs, int start, int bsLen)
         {
-            string ss = Encoding.GetEncoding("gb2312").GetString(bs, start, bsLen);
+            string ss = Encoding.GetEncoding("gbk").GetString(bs, start, bsLen);
             return ss;
         }
 

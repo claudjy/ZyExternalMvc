@@ -1,23 +1,10 @@
-----------------------header--------------------------记录时间：2018-03-08 16:43:31,243 线程ID:[7] 日志级别：ERROR - 信息描述：2134 无卡建档
-System.NullReferenceException: 未将对象引用设置到对象的实例。
-   在 Zysoft.ZyExternal.DAL.His.NjpkSelfServiceDal.CreateCardPatInfo2131(XmlDocument docRequestPre, String& outParm) 位置 d:\zhis4_source\ZyExternalMvc\Zysoft.ZyExternal.DAL\Zysoft.ZyExternal.DAL.His\NjpkSelfServiceDal.cs:行号 60
-----------------------header--------------------------记录时间：2018-03-08 17:23:37,303 线程ID:[15] 日志级别：ERROR - 信息描述：2134 无卡建档
-System.Net.WebException: 操作超时
-   在 System.Web.Services.Protocols.WebClientProtocol.GetWebResponse(WebRequest request)
-   在 System.Web.Services.Protocols.HttpWebClientProtocol.GetWebResponse(WebRequest request)
+----------------------header--------------------------记录时间：2018-03-23 17:47:42,755 线程ID:[11] 日志级别：ERROR - 信息描述：判断当前号别是否可挂号
+System.Net.WebException: 无法连接到远程服务器 ---> System.Net.Sockets.SocketException: 由于目标计算机积极拒绝，无法连接。 10.80.1.200:8090
+   在 System.Net.Sockets.Socket.DoConnect(EndPoint endPointSnapshot, SocketAddress socketAddress)
+   在 System.Net.ServicePoint.ConnectSocketInternal(Boolean connectFailure, Socket s4, Socket s6, Socket& socket, IPAddress& address, ConnectSocketState state, IAsyncResult asyncResult, Exception& exception)
+   --- 内部异常堆栈跟踪的结尾 ---
+   在 System.Net.HttpWebRequest.GetRequestStream(TransportContext& context)
+   在 System.Net.HttpWebRequest.GetRequestStream()
    在 System.Web.Services.Protocols.SoapHttpClientProtocol.Invoke(String methodName, Object[] parameters)
    在 Zysoft.ZyExternal.DAL.His.RemoteService.HisWSSelfService.BankService(String strXML) 位置 d:\zhis4_source\ZyExternalMvc\Zysoft.ZyExternal.DAL\Zysoft.ZyExternal.DAL.His\RemoteService\HisWSSelfService.cs:行号 51
-   在 Zysoft.ZyExternal.DAL.His.NjpkSelfServiceDal.CreateCardPatInfo2131(XmlDocument docRequestPre, String& outParm) 位置 d:\zhis4_source\ZyExternalMvc\Zysoft.ZyExternal.DAL\Zysoft.ZyExternal.DAL.His\NjpkSelfServiceDal.cs:行号 156
-记录时间：2018-03-08 17:32:50,210 线程ID:[26] 日志级别：ERROR - 信息描述：2134 无卡建档
-System.Net.WebException: 操作超时
-   在 System.Web.Services.Protocols.WebClientProtocol.GetWebResponse(WebRequest request)
-   在 System.Web.Services.Protocols.HttpWebClientProtocol.GetWebResponse(WebRequest request)
-   在 System.Web.Services.Protocols.SoapHttpClientProtocol.Invoke(String methodName, Object[] parameters)
-   在 Zysoft.ZyExternal.DAL.His.RemoteService.HisWSSelfService.BankService(String strXML) 位置 d:\zhis4_source\ZyExternalMvc\Zysoft.ZyExternal.DAL\Zysoft.ZyExternal.DAL.His\RemoteService\HisWSSelfService.cs:行号 51
-   在 Zysoft.ZyExternal.DAL.His.NjpkSelfServiceDal.CreateCardPatInfo2131(XmlDocument docRequestPre, String& outParm) 位置 d:\zhis4_source\ZyExternalMvc\Zysoft.ZyExternal.DAL\Zysoft.ZyExternal.DAL.His\NjpkSelfServiceDal.cs:行号 156
-----------------------header--------------------------记录时间：2018-03-08 18:25:35,690 线程ID:[10] 日志级别：ERROR - 信息描述：2134 无卡建档
-System.NullReferenceException: 未将对象引用设置到对象的实例。
-   在 Zysoft.ZyExternal.DAL.His.NjpkSelfServiceDal.CreateCardPatInfo2131(XmlDocument docRequestPre, String& outParm) 位置 d:\zhis4_source\ZyExternalMvc\Zysoft.ZyExternal.DAL\Zysoft.ZyExternal.DAL.His\NjpkSelfServiceDal.cs:行号 192
-记录时间：2018-03-08 18:29:28,768 线程ID:[7] 日志级别：ERROR - 信息描述：2134 无卡建档
-System.NullReferenceException: 未将对象引用设置到对象的实例。
-   在 Zysoft.ZyExternal.DAL.His.NjpkSelfServiceDal.CreateCardPatInfo2131(XmlDocument docRequestPre, String& outParm) 位置 d:\zhis4_source\ZyExternalMvc\Zysoft.ZyExternal.DAL\Zysoft.ZyExternal.DAL.His\NjpkSelfServiceDal.cs:行号 192
+   在 Zysoft.ZyExternal.DAL.His.NjpkSelfServiceDal.CanRegisterType(XmlDocument docRequestPre, String& outParm) 位置 d:\zhis4_source\ZyExternalMvc\Zysoft.ZyExternal.DAL\Zysoft.ZyExternal.DAL.His\NjpkSelfServiceDal.cs:行号 730

@@ -217,6 +217,7 @@
     <Content Include="Configs\Unity.config" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Properties\PublishProfiles\ExtWeb.pubxml" />
     <None Include="Properties\PublishProfiles\ruralInsur.pubxml" />
   </ItemGroup>
   <ItemGroup>

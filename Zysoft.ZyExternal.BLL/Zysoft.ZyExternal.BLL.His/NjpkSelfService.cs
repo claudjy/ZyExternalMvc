@@ -41,5 +41,153 @@ namespace Zysoft.ZyExternal.BLL.His
             }
             return 0;
         }
+
+        public int NetTest2108(XmlDocument docRequestPre, out string outParm)
+        {
+            outParm = "";
+            try
+            {
+                using (OracleConnection dbCon = OracleConnect.Connect())
+                {
+                    OracleTransaction dbTran = dbCon.BeginTransaction();
+                    CreateDBTransaction(dbCon, dbTran);
+                    try
+                    {
+                        NjpkSelfServiceDal serviceDal = new NjpkSelfServiceDal();
+                        serviceDal.NetTest2108(docRequestPre, out outParm);
+                        dbTran.Commit();
+                    }
+                    catch (Exception ex)
+                    {
+                        dbTran.Rollback();
+                        throw ex;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return -1;
+            }
+            return 0;
+        }
+
+        public int GetWorkSchedule2305(XmlDocument docRequestPre, out string outParm)
+        {
+            outParm = "";
+            try
+            { 
+                using (OracleConnection dbCon = OracleConnect.Connect())
+                {
+                    OracleTransaction dbTran = dbCon.BeginTransaction();
+                    CreateDBTransaction(dbCon, dbTran);
+                    try
+                    {
+                        NjpkSelfServiceDal serviceDal = new NjpkSelfServiceDal();
+                        serviceDal.GetWorkSchedule2305(docRequestPre, out outParm);
+                        dbTran.Commit();
+                    }
+                    catch (Exception ex)
+                    {
+                        dbTran.Rollback();
+                        throw ex;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return -1;
+            }
+            return 0;
+        }
+
+
+        public int CanRegisterType(XmlDocument docRequestPre, out string outParm)
+        {
+            outParm = "";
+            try
+            {
+                using (OracleConnection dbCon = OracleConnect.Connect())
+                {
+                    OracleTransaction dbTran = dbCon.BeginTransaction();
+                    CreateDBTransaction(dbCon, dbTran);
+                    try
+                    {
+                        NjpkSelfServiceDal serviceDal = new NjpkSelfServiceDal();
+                        serviceDal.CanRegisterType(docRequestPre, out outParm);
+                        dbTran.Commit();
+                    }
+                    catch (Exception ex)
+                    {
+                        dbTran.Rollback();
+                        throw ex;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return -1;
+            }
+            return 0;
+        }
+
+
+        public int reservateConfirm(XmlDocument docRequestPre, out string outParm)
+        {
+            outParm = "";
+            try
+            {
+                using (OracleConnection dbCon = OracleConnect.Connect())
+                {
+                    OracleTransaction dbTran = dbCon.BeginTransaction();
+                    CreateDBTransaction(dbCon, dbTran);
+                    try
+                    {
+                        NjpkSelfServiceDal serviceDal = new NjpkSelfServiceDal();
+                        serviceDal.reservateConfirm(docRequestPre, out outParm);
+                        dbTran.Commit();
+                    }
+                    catch (Exception ex)
+                    {
+                        dbTran.Rollback();
+                        throw ex;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return -1;
+            }
+            return 0;
+        }
+
+
+        public int reservateCancle(XmlDocument docRequestPre, out string outParm)
+        {
+            outParm = "";
+            try
+            {
+                using (OracleConnection dbCon = OracleConnect.Connect())
+                {
+                    OracleTransaction dbTran = dbCon.BeginTransaction();
+                    CreateDBTransaction(dbCon, dbTran);
+                    try
+                    {
+                        NjpkSelfServiceDal serviceDal = new NjpkSelfServiceDal();
+                        serviceDal.reservateCancle(docRequestPre, out outParm);
+                        dbTran.Commit();
+                    }
+                    catch (Exception ex)
+                    {
+                        dbTran.Rollback();
+                        throw ex;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return -1;
+            }
+            return 0;
+        }
     }
 }
