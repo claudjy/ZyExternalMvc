@@ -71,7 +71,7 @@ namespace Zysoft.ZyExternal.BLL.His
             return 0;
         }
 
-        public int GetWorkSchedule2305(XmlDocument docRequestPre, out string outParm)
+        public int getSchedueInfo(XmlDocument docRequestPre, out string outParm)
         {
             outParm = "";
             try
@@ -83,7 +83,7 @@ namespace Zysoft.ZyExternal.BLL.His
                     try
                     {
                         NjpkSelfServiceDal serviceDal = new NjpkSelfServiceDal();
-                        serviceDal.GetWorkSchedule2305(docRequestPre, out outParm);
+                        serviceDal.getSchedueInfo(docRequestPre, out outParm);
                         dbTran.Commit();
                     }
                     catch (Exception ex)
@@ -174,6 +174,36 @@ namespace Zysoft.ZyExternal.BLL.His
                     {
                         NjpkSelfServiceDal serviceDal = new NjpkSelfServiceDal();
                         serviceDal.reservateCancle(docRequestPre, out outParm);
+                        dbTran.Commit();
+                    }
+                    catch (Exception ex)
+                    {
+                        dbTran.Rollback();
+                        throw ex;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return -1;
+            }
+            return 0;
+        }
+
+
+        public int Register(XmlDocument docRequestPre, out string outParm)
+        {
+            outParm = "";
+            try
+            {
+                using (OracleConnection dbCon = OracleConnect.Connect())
+                {
+                    OracleTransaction dbTran = dbCon.BeginTransaction();
+                    CreateDBTransaction(dbCon, dbTran);
+                    try
+                    {
+                        NjpkSelfServiceDal serviceDal = new NjpkSelfServiceDal();
+                        serviceDal.Register(docRequestPre, out outParm);
                         dbTran.Commit();
                     }
                     catch (Exception ex)

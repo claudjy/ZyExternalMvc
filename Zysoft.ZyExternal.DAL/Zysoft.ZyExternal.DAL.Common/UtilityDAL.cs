@@ -76,6 +76,7 @@ namespace Zysoft.ZyExternal.DAL.Common
                             <ExtUserID>1400001</ExtUserID>
                             <HISDate></HISDate> 
                             <HISTradeNo></HISTradeNo> 
+                            <BankTradeNo></BankTradeNo> 
                         </Request>";
             docRequest.LoadXml(inParm);
             return docRequest;

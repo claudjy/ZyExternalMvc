@@ -101,15 +101,15 @@ namespace Zysoft.ZyExternalMvc.WebServices
         }
         #endregion
 
-        #region A 医生排班视图 JKWY_VIEW_SCHEDULE
+        #region A 同步医生排班信息接口
         /// <summary>
         /// A 医生排班视图 JKWY_VIEW_SCHEDULE
         /// </summary>
         /// <param name="docRequest"></param>
         /// <param name="outParm"></param>
         /// <returns></returns>
-        [WebMethod(Description = "JKWY_VIEW_SCHEDULE")]
-        public string GetWorkSchedule2305(string InXml)
+        [WebMethod(Description = "同步医生排班信息接口")]
+        public string getSchedueInfo(string InXml)
         {
             string outParm;
             outParm = "";
@@ -119,7 +119,31 @@ namespace Zysoft.ZyExternalMvc.WebServices
             XmlDocument docRequest = new XmlDocument();
             docRequest.LoadXml(InXml);
 
-            selfService.GetWorkSchedule2305(docRequest, out outParm);
+            selfService.getSchedueInfo(docRequest, out outParm);
+
+            return outParm;
+        }
+        #endregion
+        
+        #region D 挂号
+        /// <summary>
+        /// D 挂号
+        /// </summary>
+        /// <param name="docRequest"></param>
+        /// <param name="outParm"></param>
+        /// <returns></returns>
+        [WebMethod(Description = "挂号")]
+        public string Register(string InXml)
+        {
+            string outParm;
+            outParm = "";
+            INjpkSelfService selfService = ContainerFactory.GetContainer().Resolve<INjpkSelfService>();
+
+
+            XmlDocument docRequest = new XmlDocument();
+            docRequest.LoadXml(InXml);
+
+            selfService.Register(docRequest, out outParm);
 
             return outParm;
         }

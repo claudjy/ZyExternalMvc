@@ -32,3 +32,6 @@ _ReSharper*/
 *.vssscc
 $tf*/
 Zysoft.ZyExternalMvc\logs*/
+Zysoft.ZyExternalMvc\Web.config
+Zysoft.ZyExternalMvc\logs\log4net.txt
+.gitignore

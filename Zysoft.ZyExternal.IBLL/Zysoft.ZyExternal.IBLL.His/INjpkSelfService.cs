@@ -37,15 +37,15 @@ namespace Zysoft.ZyExternal.IBLL.His
         int CreateCardPatInfo2131(XmlDocument docRequestPre, out string outParm);
         #endregion
 
-        #region 2305 获取排班信息
+        #region 同步医生排班信息接口
         /// <summary>
-        /// 2305 获取排班信息
+        /// 同步医生排班信息接口
         /// </summary>
         /// <param name="docRequest"></param>
         /// <param name="outParm"></param>
         /// <returns></returns>
-        [Log(Introduction = "2305 获取排班信息", Order = 0)]
-        int GetWorkSchedule2305(XmlDocument docRequestPre, out string outParm);
+        [Log(Introduction = "同步医生排班信息接口", Order = 0)]
+        int getSchedueInfo(XmlDocument docRequestPre, out string outParm);
         #endregion
 
         #region 2305 获取排班信息
@@ -69,7 +69,7 @@ namespace Zysoft.ZyExternal.IBLL.His
         [Log(Introduction = "预约", Order = 1)]
         int reservateConfirm(XmlDocument docRequestPre, out string outParm);
         #endregion
-
+        
         #region F  预约取消
         /// <summary>
         /// F  用户取消预约
@@ -79,6 +79,17 @@ namespace Zysoft.ZyExternal.IBLL.His
         /// <returns></returns> 
         [Log(Introduction = "预约取消", Order = 1)]
         int reservateCancle(XmlDocument docRequestPre, out string outParm);
+        #endregion
+
+        #region D 挂号
+        /// <summary>
+        /// D 挂号
+        /// </summary>
+        /// <param name="docRequest"></param>
+        /// <param name="outParm"></param>
+        /// <returns></returns> 
+        [Log(Introduction = "挂号", Order = 1)]
+        int Register(XmlDocument docRequestPre, out string outParm);
         #endregion
     }
 }
