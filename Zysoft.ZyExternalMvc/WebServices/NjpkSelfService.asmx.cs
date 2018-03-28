@@ -29,39 +29,15 @@ namespace Zysoft.ZyExternalMvc.WebServices
             return "Hello World";
         }
 
-        #region 2131 办卡
+        #region 000 网络测试
         /// <summary>
-        /// 办卡
+        /// 000 网络测试
         /// </summary>
         /// <param name="docRequest"></param>
         /// <param name="outParm"></param>
         /// <returns></returns>
-        [WebMethod(Description = "2131 办卡")]
-        public string RegisterCtznCard(string InXml)
-        {
-            string outParm;
-            outParm = "";
-            INjpkSelfService selfService = ContainerFactory.GetContainer().Resolve<INjpkSelfService>();
-
-             
-            XmlDocument docRequest = new XmlDocument();
-            docRequest.LoadXml(InXml);
-
-            selfService.CreateCardPatInfo2131(docRequest, out outParm);
-
-            return outParm;
-        }
-        #endregion
-
-        #region 2108 网络测试
-        /// <summary>
-        /// 2108 网络测试
-        /// </summary>
-        /// <param name="docRequest"></param>
-        /// <param name="outParm"></param>
-        /// <returns></returns>
-        [WebMethod(Description = "2108 网络测试")]
-        public string NetTest2108(string InXml) 
+        [WebMethod(Description = "000 网络测试")]
+        public string NetTest2108(string InXml)
         {
             string outParm;
             outParm = "";
@@ -77,38 +53,38 @@ namespace Zysoft.ZyExternalMvc.WebServices
         }
         #endregion
 
-        #region 判断当前号别是否可挂号
+        #region 001 用户HIS信息注册
         /// <summary>
-        /// 判断当前号别是否可挂号
+        /// 001 用户HIS信息注册
         /// </summary>
         /// <param name="docRequest"></param>
         /// <param name="outParm"></param>
         /// <returns></returns>
-        [WebMethod(Description = "判断当前号别是否可挂号")]
-        public string CanRegisterType(string InXml)
+        [WebMethod(Description = "001 用户HIS信息注册")]
+        public string RegisterCtznCard(string InXml)
         {
             string outParm;
             outParm = "";
             INjpkSelfService selfService = ContainerFactory.GetContainer().Resolve<INjpkSelfService>();
 
-
+             
             XmlDocument docRequest = new XmlDocument();
             docRequest.LoadXml(InXml);
 
-            selfService.CanRegisterType(docRequest, out outParm);
+            selfService.RegisterCtznCard(docRequest, out outParm);
 
             return outParm;
         }
         #endregion
-
-        #region A 同步医生排班信息接口
+                
+        #region 003 同步医生排班信息接口
         /// <summary>
-        /// A 医生排班视图 JKWY_VIEW_SCHEDULE
+        /// 003 医生排班视图 JKWY_VIEW_SCHEDULE
         /// </summary>
         /// <param name="docRequest"></param>
         /// <param name="outParm"></param>
         /// <returns></returns>
-        [WebMethod(Description = "同步医生排班信息接口")]
+        [WebMethod(Description = "003 同步医生排班信息接口")]
         public string getSchedueInfo(string InXml)
         {
             string outParm;
@@ -124,15 +100,39 @@ namespace Zysoft.ZyExternalMvc.WebServices
             return outParm;
         }
         #endregion
-        
-        #region D 挂号
+
+        #region 004 判断当前号别是否可挂号
         /// <summary>
-        /// D 挂号
+        /// 判断当前号别是否可挂号
         /// </summary>
         /// <param name="docRequest"></param>
         /// <param name="outParm"></param>
         /// <returns></returns>
-        [WebMethod(Description = "挂号")]
+        [WebMethod(Description = "004 判断当前号别是否可挂号")]
+        public string CanRegisterType(string InXml)
+        {
+            string outParm;
+            outParm = "";
+            INjpkSelfService selfService = ContainerFactory.GetContainer().Resolve<INjpkSelfService>();
+
+
+            XmlDocument docRequest = new XmlDocument();
+            docRequest.LoadXml(InXml);
+
+            selfService.CanRegisterType(docRequest, out outParm);
+
+            return outParm;
+        }
+        #endregion
+        
+        #region 005 挂号
+        /// <summary>
+        /// 005 挂号
+        /// </summary>
+        /// <param name="docRequest"></param>
+        /// <param name="outParm"></param>
+        /// <returns></returns>
+        [WebMethod(Description = "005 挂号")]
         public string Register(string InXml)
         {
             string outParm;
@@ -149,14 +149,14 @@ namespace Zysoft.ZyExternalMvc.WebServices
         }
         #endregion
 
-        #region E 预约
+        #region 006 预约
         /// <summary>
-        /// E 预约
+        /// 006 预约
         /// </summary>
         /// <param name="docRequest"></param>
         /// <param name="outParm"></param>
         /// <returns></returns>
-        [WebMethod(Description = "预约")]
+        [WebMethod(Description = "006 预约")]
         public string reservateConfirm(string InXml)
         {
             string outParm;
@@ -173,13 +173,13 @@ namespace Zysoft.ZyExternalMvc.WebServices
         }
         #endregion
 
-        #region F  预约取消
+        #region 007  预约取消
         /// <summary>
-        ///F  预约取消
+        ///007  预约取消
         /// <param name="docRequest"></param>
         /// <param name="outParm"></param>
         /// <returns></returns>
-        [WebMethod(Description = "预约取消")]
+        [WebMethod(Description = "007 预约取消")]
         public string reservateCancle(string InXml)
         {
             string outParm;
@@ -196,5 +196,28 @@ namespace Zysoft.ZyExternalMvc.WebServices
         }
         #endregion
 
+        #region 008 用户院内帐户充值
+        /// <summary>
+        /// 008  用户院内帐户充值
+        /// </summary>
+        /// <param name="docRequest"></param>
+        /// <param name="outParm"></param>
+        /// <returns></returns> 
+        [WebMethod(Description = "008 用户院内帐户充值")]
+        public string hosAcctRecharge(string InXml)
+        {
+            string outParm;
+            outParm = "";
+            INjpkSelfService selfService = ContainerFactory.GetContainer().Resolve<INjpkSelfService>();
+
+
+            XmlDocument docRequest = new XmlDocument();
+            docRequest.LoadXml(InXml);
+
+            selfService.hosAcctRecharge(docRequest, out outParm);
+
+            return outParm;
+        }
+        #endregion
     }
 }

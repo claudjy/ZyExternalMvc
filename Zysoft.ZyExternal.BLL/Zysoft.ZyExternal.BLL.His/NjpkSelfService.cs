@@ -13,7 +13,7 @@ namespace Zysoft.ZyExternal.BLL.His
 {
     public class NjpkSelfService : ServiceBase, INjpkSelfService
     {
-        public int CreateCardPatInfo2131(XmlDocument docRequestPre, out string outParm)
+        public int RegisterCtznCard(XmlDocument docRequestPre, out string outParm)
         {
             outParm = "";
             try
@@ -25,7 +25,7 @@ namespace Zysoft.ZyExternal.BLL.His
                     try
                     {
                         NjpkSelfServiceDal serviceDal = new NjpkSelfServiceDal();
-                        serviceDal.CreateCardPatInfo2131(docRequestPre, out outParm);
+                        serviceDal.RegisterCtznCard(docRequestPre, out outParm);
                         dbTran.Commit();
                     }
                     catch (Exception ex)
@@ -203,8 +203,50 @@ namespace Zysoft.ZyExternal.BLL.His
                     try
                     {
                         NjpkSelfServiceDal serviceDal = new NjpkSelfServiceDal();
-                        serviceDal.Register(docRequestPre, out outParm);
-                        dbTran.Commit();
+                        if(serviceDal.Register(docRequestPre, out outParm)<0)
+                        {                            
+                            dbTran.Rollback();
+                        }
+                        else
+                        {
+                            dbTran.Commit();
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        dbTran.Rollback();
+                        throw ex;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return -1;
+            }
+            return 0;
+        }
+
+
+        public int hosAcctRecharge(XmlDocument docRequestPre, out string outParm)
+        {
+            outParm = "";
+            try
+            {
+                using (OracleConnection dbCon = OracleConnect.Connect())
+                {
+                    OracleTransaction dbTran = dbCon.BeginTransaction();
+                    CreateDBTransaction(dbCon, dbTran);
+                    try
+                    {
+                        NjpkSelfServiceDal serviceDal = new NjpkSelfServiceDal();
+                        if (serviceDal.hosAcctRecharge(docRequestPre, out outParm) < 0)
+                        {
+                            dbTran.Rollback();
+                        }
+                        else
+                        {
+                            dbTran.Commit();
+                        }
                     }
                     catch (Exception ex)
                     {

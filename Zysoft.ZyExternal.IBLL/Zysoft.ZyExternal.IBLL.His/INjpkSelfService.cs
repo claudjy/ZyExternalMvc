@@ -14,10 +14,10 @@ namespace Zysoft.ZyExternal.IBLL.His
 {
     public interface INjpkSelfService
     {
-        #region 2108 网络测试
+        #region 000 网络测试
 
         /// <summary>
-        /// 2108 网络测试 
+        /// 000 网络测试
         /// </summary>
         /// <param name="docRequest"></param>
         /// <param name="outParm"></param>
@@ -26,53 +26,64 @@ namespace Zysoft.ZyExternal.IBLL.His
         int NetTest2108(XmlDocument docRequest, out string outParm);
         #endregion
 
-         #region 2131 办卡
+        #region 001 用户HIS信息注册
         /// <summary>
-        /// 办卡
+        /// 001 用户HIS信息注册
         /// </summary>
         /// <param name="docRequest"></param>
         /// <param name="outParm"></param>
         /// <returns></returns>
-        [Log(Introduction = "2131 办卡")]
-        int CreateCardPatInfo2131(XmlDocument docRequestPre, out string outParm);
+        [Log(Introduction = "用户HIS信息注册")]
+        int RegisterCtznCard(XmlDocument docRequestPre, out string outParm);
         #endregion
 
-        #region 同步医生排班信息接口
+        #region 003 同步医生排班信息接口
         /// <summary>
-        /// 同步医生排班信息接口
+        /// 判断自助机当前是否可挂号
         /// </summary>
         /// <param name="docRequest"></param>
         /// <param name="outParm"></param>
-        /// <returns></returns>
+        /// <returns></returns> 
         [Log(Introduction = "同步医生排班信息接口", Order = 0)]
         int getSchedueInfo(XmlDocument docRequestPre, out string outParm);
         #endregion
 
-        #region 2305 获取排班信息
+        #region 004 判断当前号别是否可挂号
         /// <summary>
-        /// 2305 获取排班信息
+        /// 004 判断当前号别是否可挂号
         /// </summary>
         /// <param name="docRequest"></param>
         /// <param name="outParm"></param>
-        /// <returns></returns>
+        /// <returns></returns> 
         [Log(Introduction = "判断当前号别是否可挂号", Order = 0)]
         int CanRegisterType(XmlDocument docRequestPre, out string outParm);
         #endregion
 
-        #region 预约
+        #region 005 挂号
         /// <summary>
-        /// 预约
+        /// 005 挂号
         /// </summary>
         /// <param name="docRequest"></param>
         /// <param name="outParm"></param>
-        /// <returns></returns>
+        /// <returns></returns> 
+        [Log(Introduction = "挂号", Order = 1)]
+        int Register(XmlDocument docRequestPre, out string outParm);
+        #endregion
+
+        #region 006 预约
+        /// <summary>
+        /// 006  预约
+        /// </summary>
+        /// <param name="docRequest"></param>
+        /// <param name="outParm"></param>
+        /// <returns></returns> 
         [Log(Introduction = "预约", Order = 1)]
         int reservateConfirm(XmlDocument docRequestPre, out string outParm);
         #endregion
-        
-        #region F  预约取消
+
+        #region 007 预约取消
         /// <summary>
-        /// F  用户取消预约
+        /// 007  取消预约
         /// </summary>
         /// <param name="docRequest"></param>
         /// <param name="outParm"></param>
@@ -81,15 +92,15 @@ namespace Zysoft.ZyExternal.IBLL.His
         int reservateCancle(XmlDocument docRequestPre, out string outParm);
         #endregion
 
-        #region D 挂号
+        #region 008 用户院内帐户充值
         /// <summary>
-        /// D 挂号
+        /// 008  用户院内帐户充值
         /// </summary>
         /// <param name="docRequest"></param>
         /// <param name="outParm"></param>
         /// <returns></returns> 
-        [Log(Introduction = "挂号", Order = 1)]
-        int Register(XmlDocument docRequestPre, out string outParm);
+        [Log(Introduction = "用户院内帐户充值", Order = 1)]
+        int hosAcctRecharge(XmlDocument docRequestPre, out string outParm);
         #endregion
     }
 }

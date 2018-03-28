@@ -98,6 +98,10 @@ namespace Zysoft.ZyExternal.DAL.Common
             return docResponseXuanQuery;
         }
 
+        
+                          //<appCode>  </appCode>
+                          //<errorMsg>  </errorMsg>
+
         public XmlDocument GetResponseNjpkQueryXmlDoc()
         {
             XmlDocument docResponseNjpkQuery = new XmlDocument();
@@ -106,8 +110,6 @@ namespace Zysoft.ZyExternal.DAL.Common
             string inParm;
             inParm = "<?xml version=\"1.0\" encoding=\"utf-8\"?>";
             inParm += @"<root>
-                          <appCode>  </appCode>
-                          <errorMsg>  </errorMsg>
                         </root>";
             docResponseNjpkQuery.LoadXml(inParm);
             return docResponseNjpkQuery; 
