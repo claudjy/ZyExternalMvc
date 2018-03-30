@@ -421,7 +421,7 @@ namespace Zysoft.ZyExternal.DAL.His
             //string cardNo, departmentId, expertId, registerClassId, registerTypeId;
             //string seeTime, machineLocation, speciDisea, typeId;
 
-            string departmentCode = "204", doctorCode = "", schedueType = "";
+            string departmentCode = "", doctorCode = "", schedueType = "";
             string startDate, endDate, sessionCode = "A";
             XmlElement elerspCode = docResponseRoot.CreateElement("rspCode");
             ndResRoot.AppendChild(elerspCode);
