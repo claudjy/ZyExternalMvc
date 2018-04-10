@@ -1554,7 +1554,7 @@ namespace Zysoft.ZyExternal.DAL.His
             XmlNode ndroot = docRequestPre.SelectSingleNode("/root");
 
             string clientType, tradeCode = "2309";
-            clientType = "25";
+            clientType = "12";
 
             try
             {
@@ -1625,7 +1625,7 @@ namespace Zysoft.ZyExternal.DAL.His
             }
             return 0;
         }
-        #endregion
+        #endregion 
 
         #region 008 用户院内帐户充值
         /// <summary>
@@ -1786,7 +1786,7 @@ namespace Zysoft.ZyExternal.DAL.His
             }
             return 0;
         }
-        #endregion
+        #endregion   
 
         #region local funcation
 
