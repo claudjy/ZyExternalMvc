@@ -1579,7 +1579,7 @@ namespace Zysoft.ZyExternal.DAL.His
             XmlNode ndroot = docRequestPre.SelectSingleNode("/root");
 
             string clientType, tradeCode = "2309";
-            clientType = "12";
+            clientType = "25";
 
             try
             {

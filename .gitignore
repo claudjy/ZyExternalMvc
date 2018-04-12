@@ -37,3 +37,4 @@ Zysoft.ZyExternalMvc\logs\log4net.txt
 .gitignore
 /Zysoft.ZyExternalMvc/Support
 /Zysoft.ZyExternalMvc/logs
+*.lock
