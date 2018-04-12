@@ -18,6 +18,8 @@ namespace Zysoft.ZyExternal.DAL.His
 {
     public class NjpkSelfServiceDal : DB
     {
+        private const string publicKey = "xR6gE8+RC4XGi82ShkQC1Q==";
+        private const string signature = "IJNoaW5VxHujFzAEMbglcYyG+5GIkyQNnLeHtKDEmeg=";
         string serviceURL = "http://localhost:4940/webservices/WSSelfService.asmx";
 
         public NjpkSelfServiceDal()
@@ -210,6 +212,8 @@ namespace Zysoft.ZyExternal.DAL.His
                 eleRateType.InnerText = siType;
                 ndRequest.AppendChild(eleRateType);
 
+                ndRequest.SelectSingleNode("PublicKey").InnerText = publicKey;
+                ndRequest.SelectSingleNode("Signature").InnerText = signature;
 
                 //========================================================
 
@@ -344,6 +348,9 @@ namespace Zysoft.ZyExternal.DAL.His
                 eleDoctorCode.InnerText = doctorCode;
                 ndRequest.AppendChild(eleDoctorCode);
 
+                ndRequest.SelectSingleNode("PublicKey").InnerText = publicKey;
+                ndRequest.SelectSingleNode("Signature").InnerText = signature;
+
                 //========================================================
 
 
@@ -473,6 +480,8 @@ namespace Zysoft.ZyExternal.DAL.His
                 eleServiceDate.InnerText = "";
                 ndRequest.AppendChild(eleServiceDate);
 
+                ndRequest.SelectSingleNode("PublicKey").InnerText = publicKey;
+                ndRequest.SelectSingleNode("Signature").InnerText = signature;
                 //========================================================
 
 
@@ -827,6 +836,9 @@ namespace Zysoft.ZyExternal.DAL.His
                 eleDoctor.InnerText = doctor;
                 ndRequest.AppendChild(eleDoctor);
 
+                ndRequest.SelectSingleNode("PublicKey").InnerText = publicKey;
+                ndRequest.SelectSingleNode("Signature").InnerText = signature;
+
                 //========================================================
 
 
@@ -894,8 +906,12 @@ namespace Zysoft.ZyExternal.DAL.His
             registerFlag = "0";
             cycleNum = 0;
             docRequest.SelectSingleNode("/Request/TradeCode").InnerText = "2304";
+
             XmlNode ndRequest = docRequest.SelectSingleNode("Request");
             ndTimeInfos = null;
+            ndRequest.SelectSingleNode("PublicKey").InnerText = publicKey;
+            ndRequest.SelectSingleNode("Signature").InnerText = signature;
+
 
             HisWSSelfService hisWSSelfService = new HisWSSelfService();
             hisWSSelfService.Url = serviceURL;
@@ -1292,6 +1308,9 @@ namespace Zysoft.ZyExternal.DAL.His
                 eleVisitData.InnerText = visitData;
                 ndRequest.AppendChild(eleVisitData);
 
+                ndRequest.SelectSingleNode("PublicKey").InnerText = publicKey;
+                ndRequest.SelectSingleNode("Signature").InnerText = signature;
+
                 string outParm;
                 HisWSSelfService hisWSSelfService = new HisWSSelfService();
                 hisWSSelfService.Url = serviceURL;
@@ -1358,6 +1377,9 @@ namespace Zysoft.ZyExternal.DAL.His
                 eleVisitType.InnerText = "2";
                 ndRequest.AppendChild(eleVisitType);
 
+                ndRequest.SelectSingleNode("PublicKey").InnerText = publicKey;
+                ndRequest.SelectSingleNode("Signature").InnerText = signature;
+
                 string outParm;
                 HisWSSelfService hisWSSelfService = new HisWSSelfService();
                 hisWSSelfService.Url = serviceURL;
@@ -1419,6 +1441,8 @@ namespace Zysoft.ZyExternal.DAL.His
                     ndRequest.AppendChild(eleBankDate);
                 }
                 ndRequest.SelectSingleNode("BankDate").InnerText = DateTime.Now.ToString("yyyyMMddHHmmss");
+                ndRequest.SelectSingleNode("PublicKey").InnerText = publicKey;
+                ndRequest.SelectSingleNode("Signature").InnerText = signature;
 
                 string outParm;
                 HisWSSelfService hisWSSelfService = new HisWSSelfService();
@@ -1507,6 +1531,7 @@ namespace Zysoft.ZyExternal.DAL.His
                 XmlElement elesectionId = docResponseRoot.CreateElement("sectionId");
                 ndResponseRoot.AppendChild(elesectionId);
 
+
                 string preHisTradeNo;
                 if (PreQuene2306(inDepartmentId, inExpertId, serviceDate, inCardNo, reserveCode,
                     inSeeTime, inReceiveNo, machinelocation, out preHisTradeNo, out admitAddress, out admitRange,
@@ -1579,7 +1604,9 @@ namespace Zysoft.ZyExternal.DAL.His
                 eleOrgHISTradeNo.InnerText = reservateFlow;
                 ndRequest.AppendChild(eleOrgHISTradeNo);
 
-                
+                ndRequest.SelectSingleNode("PublicKey").InnerText = publicKey;
+                ndRequest.SelectSingleNode("Signature").InnerText = signature;
+
                 //XmlElement eleBankTradeNo = docRequest.CreateElement("BankTradeNo");
                 //eleBankTradeNo.InnerText = StringExtension.GetRandomNext(9).ToString();
                 //ndRequest.AppendChild(eleBankTradeNo);
@@ -1852,6 +1879,9 @@ namespace Zysoft.ZyExternal.DAL.His
             eleBankDate.InnerText = DateTime.Now.ToString("yyyyMMddhhmmss");
             ndRequest.AppendChild(eleBankDate);
 
+            ndRequest.SelectSingleNode("PublicKey").InnerText = publicKey;
+            ndRequest.SelectSingleNode("Signature").InnerText = signature;
+
             string outParm;
             HisWSSelfService hisWSSelfService = new HisWSSelfService();
             hisWSSelfService.Url = serviceURL;
@@ -1954,6 +1984,9 @@ namespace Zysoft.ZyExternal.DAL.His
                 ndRequest.AppendChild(elePreFlag);
 
                 docRequest.SelectSingleNode("Request/TerminalID").InnerText = machinelocation;
+
+                ndRequest.SelectSingleNode("PublicKey").InnerText = publicKey;
+                ndRequest.SelectSingleNode("Signature").InnerText = signature;
 
                 //========================================================
 

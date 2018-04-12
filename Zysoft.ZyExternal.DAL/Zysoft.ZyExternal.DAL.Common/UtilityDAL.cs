@@ -77,6 +77,9 @@ namespace Zysoft.ZyExternal.DAL.Common
                             <HISDate></HISDate> 
                             <HISTradeNo></HISTradeNo> 
                             <BankTradeNo></BankTradeNo> 
+                            <PublicKey></PublicKey> 
+                            <Signature></Signature> 
+                            <Content></Content> 
                         </Request>";
             docRequest.LoadXml(inParm);
             return docRequest;
