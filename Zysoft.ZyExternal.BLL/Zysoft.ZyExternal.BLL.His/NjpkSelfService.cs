@@ -227,6 +227,41 @@ namespace Zysoft.ZyExternal.BLL.His
         }
 
 
+        public int RechargeZYAcount(XmlDocument docRequestPre, out string outParm)
+        {
+            outParm = "";
+            try
+            {
+                using (OracleConnection dbCon = OracleConnect.Connect())
+                {
+                    OracleTransaction dbTran = dbCon.BeginTransaction();
+                    CreateDBTransaction(dbCon, dbTran);
+                    try
+                    {
+                        NjpkSelfServiceDal serviceDal = new NjpkSelfServiceDal();
+                        if (serviceDal.RechargeZYAcount(docRequestPre, out outParm) < 0)
+                        {
+                            dbTran.Rollback();
+                        }
+                        else
+                        {
+                            dbTran.Commit();
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        dbTran.Rollback();
+                        throw ex;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return -1;
+            }
+            return 0;
+        }
+
         public int hosAcctRecharge(XmlDocument docRequestPre, out string outParm)
         {
             outParm = "";
@@ -240,6 +275,41 @@ namespace Zysoft.ZyExternal.BLL.His
                     {
                         NjpkSelfServiceDal serviceDal = new NjpkSelfServiceDal();
                         if (serviceDal.hosAcctRecharge(docRequestPre, out outParm) < 0)
+                        {
+                            dbTran.Rollback();
+                        }
+                        else
+                        {
+                            dbTran.Commit();
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        dbTran.Rollback();
+                        throw ex;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return -1;
+            }
+            return 0;
+        }
+
+        public int GetCurrentRegisterType(XmlDocument docRequestPre, out string outParm)
+        {
+            outParm = "";
+            try
+            {
+                using (OracleConnection dbCon = OracleConnect.Connect())
+                {
+                    OracleTransaction dbTran = dbCon.BeginTransaction();
+                    CreateDBTransaction(dbCon, dbTran);
+                    try
+                    {
+                        NjpkSelfServiceDal serviceDal = new NjpkSelfServiceDal();
+                        if (serviceDal.GetCurrentRegisterType(docRequestPre, out outParm) < 0)
                         {
                             dbTran.Rollback();
                         }

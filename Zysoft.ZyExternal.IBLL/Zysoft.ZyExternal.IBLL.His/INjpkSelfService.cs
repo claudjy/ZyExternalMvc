@@ -92,15 +92,37 @@ namespace Zysoft.ZyExternal.IBLL.His
         int reservateCancle(XmlDocument docRequestPre, out string outParm);
         #endregion
 
-        #region 008 用户院内帐户充值
+        #region 008 住院预交金充值
         /// <summary>
-        /// 008  用户院内帐户充值
+        /// 008  住院预交金充值
         /// </summary>
         /// <param name="docRequest"></param>
         /// <param name="outParm"></param>
         /// <returns></returns> 
-        [Log(Introduction = "用户院内帐户充值", Order = 1)]
+        [Log(Introduction = "住院预交金充值", Order = 1)]
+        int RechargeZYAcount(XmlDocument docRequestPre, out string outParm);
+        #endregion
+
+        #region 009 院内帐户充值
+        /// <summary>
+        /// 009 院内帐户充值
+        /// </summary>
+        /// <param name="docRequest"></param>
+        /// <param name="outParm"></param>
+        /// <returns></returns> 
+        [Log(Introduction = "院内帐户充值", Order = 1)]
         int hosAcctRecharge(XmlDocument docRequestPre, out string outParm);
+        #endregion
+
+        #region 010 根据挂号类型， 获取费用明细
+        /// <summary>
+        /// 010 根据挂号类型， 获取费用明细
+        /// </summary>
+        /// <param name="docRequest"></param> 
+        /// <param name="outParm"></param>
+        /// <returns></returns> 
+        [Log(Introduction = "根据挂号类型， 获取费用明细", Order = 1)]
+        int GetCurrentRegisterType(XmlDocument docRequestPre, out string outParm);
         #endregion
     }
 }

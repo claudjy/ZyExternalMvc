@@ -204,6 +204,30 @@ namespace Zysoft.ZyExternalMvc.WebServices
         /// <param name="outParm"></param>
         /// <returns></returns> 
         [WebMethod(Description = "008 用户院内帐户充值")]
+        public string RechargeZYAcount(string InXml)
+        {
+            string outParm; 
+            outParm = "";
+            INjpkSelfService selfService = ContainerFactory.GetContainer().Resolve<INjpkSelfService>();
+
+
+            XmlDocument docRequest = new XmlDocument();
+            docRequest.LoadXml(InXml);
+
+            selfService.RechargeZYAcount(docRequest, out outParm);
+
+            return outParm;
+        }
+        #endregion
+
+        #region 009 院内帐户充值
+        /// <summary>
+        /// 009  院内帐户充值
+        /// </summary>
+        /// <param name="docRequest"></param>
+        /// <param name="outParm"></param>
+        /// <returns></returns> 
+        [WebMethod(Description = "009 院内帐户充值")]
         public string hosAcctRecharge(string InXml)
         {
             string outParm;
@@ -215,6 +239,30 @@ namespace Zysoft.ZyExternalMvc.WebServices
             docRequest.LoadXml(InXml);
 
             selfService.hosAcctRecharge(docRequest, out outParm);
+
+            return outParm;
+        }
+        #endregion
+
+        #region 010 根据挂号类型， 获取费用明细
+        /// <summary>
+        /// 010 根据挂号类型， 获取费用明细
+        /// </summary>
+        /// <param name="docRequest"></param>
+        /// <param name="outParm"></param>
+        /// <returns></returns> 
+        [WebMethod(Description = "010 根据挂号类型， 获取费用明细")]
+        public string GetCurrentRegisterType(string InXml)
+        {
+            string outParm;
+            outParm = "";
+            INjpkSelfService selfService = ContainerFactory.GetContainer().Resolve<INjpkSelfService>();
+
+
+            XmlDocument docRequest = new XmlDocument();
+            docRequest.LoadXml(InXml);
+
+            selfService.GetCurrentRegisterType(docRequest, out outParm);
 
             return outParm;
         }
