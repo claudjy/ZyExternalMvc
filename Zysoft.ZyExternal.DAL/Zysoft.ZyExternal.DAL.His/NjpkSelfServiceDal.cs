@@ -1992,6 +1992,7 @@ namespace Zysoft.ZyExternal.DAL.His
             return 0;
         }
         #endregion
+
         #region local funcation
 
         private int CreatePrepayment2151(string inCardNo, string empNameNo, string bankTradeNo,
