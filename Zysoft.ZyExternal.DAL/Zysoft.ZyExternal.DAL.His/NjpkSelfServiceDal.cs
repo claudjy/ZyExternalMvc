@@ -988,6 +988,7 @@ namespace Zysoft.ZyExternal.DAL.His
                 seeTime = ndReqRoot.SelectSingleNode("inSeeTime").InnerText;
                 departmentCode = ndReqRoot.SelectSingleNode("inDepartmentId").InnerText;
                 doctor = ndReqRoot.SelectSingleNode("inExpertId").InnerText;
+                if(doctor.IsNull())doctor ="*";
 
                 doctorSeq = ndReqRoot.SelectSingleNode("inSectionId").InnerText;
 
@@ -1315,6 +1316,10 @@ namespace Zysoft.ZyExternal.DAL.His
                 XmlElement eleVisitData = docRequest.CreateElement("VisitData");
                 eleVisitData.InnerText = visitData;
                 ndRequest.AppendChild(eleVisitData);
+
+                XmlElement elePreCharge = docRequest.CreateElement("PreCharge");
+                elePreCharge.InnerText = "0";
+                ndRequest.AppendChild(elePreCharge);
 
                 ndRequest.SelectSingleNode("PublicKey").InnerText = publicKey;
                 ndRequest.SelectSingleNode("Signature").InnerText = signature;
