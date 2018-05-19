@@ -15,10 +15,10 @@ namespace Zysoft.ZyExternal.DAL.His.RemoteService
         [System.Diagnostics.DebuggerStepThroughAttribute()]
         [System.ComponentModel.DesignerCategoryAttribute("code")]
         [System.Web.Services.WebServiceBindingAttribute(Name="WSSelfServiceSoap", Namespace="http://www.zysoft.com.cn/")]
-        public partial class WSSelfService : System.Web.Services.Protocols.SoapHttpClientProtocol {
+        public partial class HisWSSelfService : System.Web.Services.Protocols.SoapHttpClientProtocol {
     
             /// <remarks/>
-            public WSSelfService() {
+            public HisWSSelfService() {
                 this.Url = "http://localhost:4940/webservices/WSSelfService.asmx";
             }
     

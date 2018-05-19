@@ -124,5 +124,37 @@ namespace Zysoft.ZyExternal.IBLL.His
         [Log(Introduction = "根据挂号类型， 获取费用明细", Order = 1)]
         int GetCurrentRegisterType(XmlDocument docRequestPre, out string outParm);
         #endregion
+
+        #region 011 获取划价单接口
+        /// <summary>
+        /// 011 获取划价单接口
+        /// </summary>
+        /// <param name="docRequest"></param> 
+        /// <param name="outParm"></param>
+        /// <returns></returns> 
+        [Log(Introduction = "011 获取划价单接口", Order = 1)]
+        int getPreNosInfo(XmlDocument docRequestPre, out string outParm);
+        #endregion
+
+        #region 012 获取划价单明细接口
+        /// <summary>
+        /// 012 获取划价单明细接口
+        /// </summary>
+        /// <param name="docRequestPre"></param>
+        /// <param name="outParm"></param>
+        /// <returns></returns>
+        int GetPreNosDetailInfo(XmlDocument docRequestPre, out string outParm);
+        #endregion
+
+        #region 013 单张划价单缴费
+        /// <summary>
+        /// 013 单张划价单缴费
+        /// </summary>
+        /// <param name="docRequestPre"></param>
+        /// <param name="outParm"></param>
+        /// <returns></returns>
+        int SaveBillItems(XmlDocument docRequestPre, out string outParm);
+        #endregion
+
     }
 }

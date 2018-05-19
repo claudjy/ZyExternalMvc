@@ -1078,6 +1078,7 @@ namespace Zysoft.ZyExternal.DAL.His
                 }
 
                 string charges; string insurFund;
+                string money;
                 string insurAccountCharges; string insurHospCharges; string insurBalance;
                 string insurSafe; string insurOfficialCharges; string insuranceNo;
                 string safetyNo; string insuranceCardNo; string returnText;
@@ -1092,13 +1093,15 @@ namespace Zysoft.ZyExternal.DAL.His
 
                 string bankTradeNo;
                 string inBankTraceDate, inBankTraceTime;
-                charges = ndReqRoot.SelectSingleNode("inCashPay").InnerText;
+                money = ndReqRoot.SelectSingleNode("inCashPay").InnerText;
                 cost = ndReqRoot.SelectSingleNode("inJeAll").InnerText;
                 bankTradeNo = ndReqRoot.SelectSingleNode("inRcptstreamno").InnerText;
                 inPersonnelType = ndReqRoot.SelectSingleNode("inPersonnelType").InnerText;
                 inBankTraceDate = ndReqRoot.SelectSingleNode("inBankTraceDate").InnerText;
                 inBankTraceTime = ndReqRoot.SelectSingleNode("inBankTraceTime").InnerText;
-               
+
+
+                charges = money;
 
                 bankDate = DateTime.Now.ToString("yyyyMMddHHmmss");
                 insurFund = (decimal.Parse(cost) - decimal.Parse(charges)).ToString();
@@ -1139,13 +1142,14 @@ namespace Zysoft.ZyExternal.DAL.His
                 //    return -1;
                 //}
 
-                if (ChargeSettle2094(visitNo, charges, insurFund,
+                string settleNo;
+                if (ChargeSettle2094(visitNo, money, charges, insurFund,
                       insurAccountCharges, insurHospCharges, insurBalance,
                       insurSafe, insurOfficialCharges, insuranceNo,
                       safetyNo, insuranceCardNo, returnText,
-                      businessNo, insurApplyNo,
-                      visitData, payType, bankTradeNo, empNameNo,
-                      bankDate, out receiptNo, out errorMsg) < 0)
+                      businessNo, insurApplyNo, "1",
+                      visitData, "", payType, bankTradeNo, empNameNo,
+                      bankDate, machineCode, out receiptNo, out settleNo, out errorMsg) < 0)
                 {
                     elerspCode.InnerText = "0";
                     elerspMsg.InnerText = errorMsg;
@@ -1214,20 +1218,22 @@ namespace Zysoft.ZyExternal.DAL.His
             return 0;
         }
 
-        private int ChargeSettle2094(string visitNo, string charges, string insurFund,
-                     string insurAccountCharges, string insurHospCharges, string insurBalance,
+        private int ChargeSettle2094(string visitNo, string money, string cost,
+                     string insurFund, string insurAccountCharges, string insurHospCharges, string insurBalance,
                      string insurSafe, string insurOfficialCharges, string insuranceNo,
                      string safetyNo, string insuranceCardNo, string returnText,
-                     string businessNo, string insurApplyNo,
-                     string visitData, string payType, string bankTradeNo, string empNameNo,
-                     string bankDate, out string receiptNo,
+                     string businessNo, string insurApplyNo, string feeType,
+                     string visitData, string sequenceNos, string payType, 
+                     string bankTradeNo, string empNameNo, 
+                     string bankDate, string machineCode,
+                     out string receiptNo, out string outParmXml,
                      out string errorMsg)
         {
-            UtilityDAL utilityDAL = new UtilityDAL();
+            UtilityDAL utilityDAL = new UtilityDAL(); 
 
             string clientType, tradeCode = "2094";
             clientType = "25";
-            receiptNo = errorMsg = "";
+            outParmXml = receiptNo = errorMsg = "";
 
             try
             {
@@ -1238,8 +1244,8 @@ namespace Zysoft.ZyExternal.DAL.His
                 ndRequest.SelectSingleNode("TradeCode").InnerText = tradeCode;
                 ndRequest.SelectSingleNode("ExtUserID").InnerText = empNameNo;
                 ndRequest.SelectSingleNode("ClientType").InnerText = clientType;
-                ndRequest.SelectSingleNode("BankTradeNo").InnerText = StringExtension.GetRandomNext(9).ToString();
-
+                ndRequest.SelectSingleNode("BankTradeNo").InnerText = bankTradeNo;
+                ndRequest.SelectSingleNode("TerminalID").InnerText = machineCode;
 
                 if (ndRequest.SelectSingleNode("BankDate") == null)
                 {
@@ -1248,6 +1254,7 @@ namespace Zysoft.ZyExternal.DAL.His
                 }
                 if (bankDate.IsNull()) bankDate = DateTime.Now.ToString("yyyyMMddHHmmss");
                 ndRequest.SelectSingleNode("BankDate").InnerText = bankDate;
+                ndRequest.SelectSingleNode("HISDate").InnerText = DateTime.Now.ToString("yyyyMMddHHmmss");
 
                 XmlElement eleIoFlag = docRequest.CreateElement("IoFlag");
                 eleIoFlag.InnerText = "0";
@@ -1257,12 +1264,20 @@ namespace Zysoft.ZyExternal.DAL.His
                 eleVisitNo.InnerText = visitNo;
                 ndRequest.AppendChild(eleVisitNo);
 
+                XmlElement eleFeeType = docRequest.CreateElement("FeeType");
+                eleFeeType.InnerText = feeType;
+                ndRequest.AppendChild(eleFeeType);
+
                 XmlElement elePayType = docRequest.CreateElement("PayType");
                 elePayType.InnerText = payType;
                 ndRequest.AppendChild(elePayType);
 
+                XmlElement eleMoney = docRequest.CreateElement("Money");
+                eleMoney.InnerText = money;
+                ndRequest.AppendChild(eleMoney);
+
                 XmlElement eleCharges = docRequest.CreateElement("Charges");
-                eleCharges.InnerText = charges;
+                eleCharges.InnerText = "0";
                 ndRequest.AppendChild(eleCharges);
 
                 XmlElement eleInsurFund = docRequest.CreateElement("InsurFund");
@@ -1318,18 +1333,29 @@ namespace Zysoft.ZyExternal.DAL.His
                 ndRequest.AppendChild(eleVisitData);
 
                 XmlElement elePreCharge = docRequest.CreateElement("PreCharge");
-                elePreCharge.InnerText = "0";
+                elePreCharge.InnerText = cost;
                 ndRequest.AppendChild(elePreCharge);
+
+                XmlElement elePreCost = docRequest.CreateElement("PreCost");
+                elePreCost.InnerText = cost;
+                ndRequest.AppendChild(elePreCost);
+
+                XmlElement elePreDerate = docRequest.CreateElement("PreDerate");
+                elePreDerate.InnerText = "0";
+                ndRequest.AppendChild(elePreDerate);
+
+                XmlElement eleSequenceNos = docRequest.CreateElement("SequenceNos");
+                eleSequenceNos.InnerXml = sequenceNos;
+                ndRequest.AppendChild(eleSequenceNos);
 
                 ndRequest.SelectSingleNode("PublicKey").InnerText = publicKey;
                 ndRequest.SelectSingleNode("Signature").InnerText = signature;
 
-                string outParm;
                 HisWSSelfService hisWSSelfService = new HisWSSelfService();
                 hisWSSelfService.Url = serviceURL;
-                outParm = hisWSSelfService.BankService(ndRequest.OuterXml);
+                outParmXml = hisWSSelfService.BankService(ndRequest.OuterXml);
                 XmlDocument docResponse = new XmlDocument();
-                docResponse.LoadXml(outParm);
+                docResponse.LoadXml(outParmXml);
                 XmlNode ndResponse = docResponse.SelectSingleNode("Response");
                 string resultCode, resultMessage;
 
@@ -1342,6 +1368,7 @@ namespace Zysoft.ZyExternal.DAL.His
                     return -1;
                 }
                 receiptNo = ndResponse.SelectSingleNode("ReceiptNo").InnerText;
+                
             }
             catch (Exception ex)
             {
@@ -1992,6 +2019,522 @@ namespace Zysoft.ZyExternal.DAL.His
                 elerspMsg.InnerText = ex.Message;
                 outParm = docResponseRoot.OuterXml;
                 Log4NetHelper.Error("根据挂号类型， 获取费用明细", ex);
+                return -1;
+            }
+            return 0;
+        }
+        #endregion
+
+        #region 011 获取划价单接口
+        public int getPreNosInfo(XmlDocument docRequestPre, out string outParm)
+        {;
+
+            UtilityDAL utilityDAL = new UtilityDAL();
+            XmlDocument docResponseRoot = utilityDAL.GetResponseNjpkQueryXmlDoc();
+            XmlNode ndResRoot = docResponseRoot.SelectSingleNode("root");
+            XmlNode ndReqRoot = docRequestPre.SelectSingleNode("/root");
+
+            string cardNo, cardNoType;
+            cardNo = ndReqRoot.SelectSingleNode("cardNo").InnerText;
+            cardNoType = ndReqRoot.SelectSingleNode("cardNoType").InnerText;
+
+            string clientType, tradeCode = "2090";
+            clientType = "25";
+
+            XmlElement elerspCode = docResponseRoot.CreateElement("rspCode");
+            ndResRoot.AppendChild(elerspCode);
+
+            XmlElement elerspMsg = docResponseRoot.CreateElement("rspMsg");
+            ndResRoot.AppendChild(elerspMsg);
+
+            try
+            {
+
+                //=========================================================
+                XmlDocument docRequest = utilityDAL.GetRequestXmlDoc();
+                XmlNode ndRequest = docRequest.SelectSingleNode("Request");
+                ndRequest.SelectSingleNode("TradeCode").InnerText = tradeCode;
+                ndRequest.SelectSingleNode("ExtUserID").InnerText = "";
+                ndRequest.SelectSingleNode("ClientType").InnerText = clientType;
+
+
+                XmlElement eleIoFlag = docRequest.CreateElement("IoFlag");
+                eleIoFlag.InnerText = "0";
+                ndRequest.AppendChild(eleIoFlag);
+
+                XmlElement eleVisitNo = docRequest.CreateElement("VisitNo");
+                eleVisitNo.InnerText = cardNo;
+                ndRequest.AppendChild(eleVisitNo);
+
+                XmlElement eleVisitType = docRequest.CreateElement("VisitType");
+                eleVisitType.InnerText = "1";
+                ndRequest.AppendChild(eleVisitType);
+
+                XmlElement eleBankDate = docRequest.CreateElement("BankDate");
+                eleBankDate.InnerText = DateTime.Now.ToString("yyyyMMddhhmmss");
+                ndRequest.AppendChild(eleBankDate);
+
+                ndRequest.SelectSingleNode("PublicKey").InnerText = publicKey;
+                ndRequest.SelectSingleNode("Signature").InnerText = signature;
+                //========================================================
+
+
+
+
+                HisWSSelfService hisWSSelfService = new HisWSSelfService();
+                hisWSSelfService.Url = serviceURL;
+                outParm = hisWSSelfService.BankService(ndRequest.OuterXml);
+                XmlDocument docResponse = new XmlDocument();
+                docResponse.LoadXml(outParm);
+                XmlNode ndResponse = docResponse.SelectSingleNode("Response");
+                string resultCode, resultMessage;
+
+                resultCode = ndResponse.SelectSingleNode("ResultCode").InnerText;
+                resultMessage = ndResponse.SelectSingleNode("ResultContent").InnerText;
+
+                
+
+
+
+                if (resultCode != "0000")
+                {
+                    elerspMsg.InnerText = resultMessage;
+                    outParm = docResponseRoot.OuterXml;
+                    return -1;
+                }
+                long cycleNum;
+                cycleNum = long.Parse(docResponse.SelectSingleNode("Response/CycleNum").InnerText);
+                if (cycleNum <= 0)
+                {
+                    elerspMsg.InnerText = "交易成功！";
+                    outParm = docResponseRoot.OuterXml;
+                    return -1;
+                }
+
+                XmlElement eleItems = docResponseRoot.CreateElement("items");
+                ndResRoot.AppendChild(eleItems);
+
+                string residenceNo, sickId, sickName, idCardNo, admitDate;
+                string applyDept;
+                string diagnosisName, doctor;
+                string  preNo, djh;
+
+                string errorMsg, visitData;
+                string sequenceNos;
+                decimal preCost;
+                foreach (XmlNode ndVisitInfo in ndResponse.SelectNodes("VisitInfos/VisitInfo"))
+                {
+                    sequenceNos = djh = preNo = "";
+                    preCost = 0;
+                    residenceNo = ndVisitInfo.SelectSingleNode("ResidenceNo").InnerText;
+                    sickId = ndVisitInfo.SelectSingleNode("PatientID").InnerText;
+                    sickName = ndVisitInfo.SelectSingleNode("PatientName").InnerText;
+                    cardNo = ndVisitInfo.SelectSingleNode("PayCardNo").InnerText;
+                    doctor = ndVisitInfo.SelectSingleNode("ApplyDoctor").InnerText;
+                    idCardNo = ""; // ndVisitInfo.SelectSingleNode("IDCardNo").InnerText;
+                    admitDate = ndVisitInfo.SelectSingleNode("AdmitDate").InnerText;
+                    applyDept = ndVisitInfo.SelectSingleNode("ApplyDept").InnerText;
+                    diagnosisName = ndVisitInfo.SelectSingleNode("DiagnosisName").InnerText;
+                    visitData = ndVisitInfo.SelectSingleNode("VisitData").InnerText;
+
+                    XmlNode ndApplyItems = ndResponse.SelectSingleNode("ApplyItems");
+                    XmlNode ndSequenceNos;
+                    if (PreCost2095(residenceNo, sickId, ndApplyItems, out ndSequenceNos, // out sequenceNos, out djh,
+                        out preCost, out errorMsg) < 0)
+                    {
+                        elerspMsg.InnerText = errorMsg;
+                        outParm = docResponseRoot.OuterXml;
+                        return -1;
+                    }
+
+                    string applyNo;
+                    foreach (XmlNode ndSequenceNo in ndSequenceNos.SelectNodes("SequenceNo"))
+                    {
+                        applyNo = ndSequenceNo.Attributes["ApplyNo"].Value;
+                        if (("," + djh).IndexOf("" + applyNo + ",") < 0)  //判断单据号不能重复
+                        {
+                            djh += applyNo + ",";
+                        }
+                        sequenceNos += ndSequenceNo.InnerText + ",";
+                    }
+                    XmlElement eleItem = docResponseRoot.CreateElement("item");
+
+                    XmlElement elepreNo = docResponseRoot.CreateElement("preNo");
+                    XmlElement eleregisterFlow = docResponseRoot.CreateElement("registerFlow"); 
+                    XmlElement elepatientId = docResponseRoot.CreateElement("patientId");
+                    XmlElement elepatientName = docResponseRoot.CreateElement("patientName");
+                    XmlElement elecardNo = docResponseRoot.CreateElement("cardNo");
+                    XmlElement elecardNoType = docResponseRoot.CreateElement("cardNoType");
+                    XmlElement eleidenNo = docResponseRoot.CreateElement("idenNo");
+                    XmlElement eleclinicDate = docResponseRoot.CreateElement("clinicDate");
+                    XmlElement eledepartmentId = docResponseRoot.CreateElement("departmentId");
+                    XmlElement eleDepartmentName = docResponseRoot.CreateElement("DepartmentName");
+                    XmlElement eleexpertId = docResponseRoot.CreateElement("expertId");
+                    XmlElement eleExpertName = docResponseRoot.CreateElement("ExpertName");
+                    XmlElement eleDiagnoseName = docResponseRoot.CreateElement("DiagnoseName");
+                    XmlElement eleTotalFee = docResponseRoot.CreateElement("TotalFee");
+                    XmlElement elepaymentStatus = docResponseRoot.CreateElement("paymentStatus");
+                    XmlElement eleybcfh = docResponseRoot.CreateElement("ybcfh");
+                    XmlElement eleybksbm = docResponseRoot.CreateElement("ybksbm");
+                    XmlElement eleybysbm = docResponseRoot.CreateElement("ybysbm");
+                    XmlElement eleybbzm = docResponseRoot.CreateElement("ybbzm");
+                    XmlElement eledjh = docResponseRoot.CreateElement("djh");
+                    XmlElement elemzlsh = docResponseRoot.CreateElement("mzlsh");
+                    XmlElement elevisitData = docResponseRoot.CreateElement("visitData");
+                    XmlElement eleSequenceNos = docResponseRoot.CreateElement("SequenceNos");
+
+                    elepreNo.InnerText = sequenceNos;
+                    eleregisterFlow.InnerText = residenceNo;
+                    elepatientId.InnerText = sickId;
+                    elepatientName.InnerText = sickName;
+                    elecardNo.InnerText = cardNo;
+                    elecardNoType.InnerText = "";
+                    eleidenNo.InnerText = idCardNo;
+                    eleclinicDate.InnerText = admitDate;
+                    eledepartmentId.InnerText = applyDept;
+                    eleDepartmentName.InnerText = "";
+                    eleexpertId.InnerText = doctor;
+                    eleExpertName.InnerText = "";
+                    eleDiagnoseName.InnerText = diagnosisName;
+                    eleTotalFee.InnerText = preCost.ToString();
+                    elepaymentStatus.InnerText = "1";
+                    eleybcfh.InnerText = sequenceNos;
+                    eleybksbm.InnerText = applyDept;
+                    eleybysbm.InnerText = doctor;
+                    eleybbzm.InnerText = "";
+                    eledjh.InnerText = residenceNo;
+                    elemzlsh.InnerText = residenceNo;
+                    elevisitData.InnerText = visitData;
+                    eleSequenceNos.InnerXml = ndSequenceNos.InnerXml;
+
+                    eleItem.AppendChild(elepreNo);
+                    eleItem.AppendChild(eleregisterFlow);
+                    eleItem.AppendChild(elepatientId);
+                    eleItem.AppendChild(elepatientName);
+                    eleItem.AppendChild(elecardNo);
+                    eleItem.AppendChild(elecardNoType);
+                    eleItem.AppendChild(eleidenNo);
+                    eleItem.AppendChild(eleclinicDate);
+                    eleItem.AppendChild(eledepartmentId);
+                    eleItem.AppendChild(eleDepartmentName);
+                    eleItem.AppendChild(eleexpertId);
+                    eleItem.AppendChild(eleExpertName);
+                    eleItem.AppendChild(eleDiagnoseName);
+                    eleItem.AppendChild(eleTotalFee);
+                    eleItem.AppendChild(elepaymentStatus);
+                    eleItem.AppendChild(eleybcfh);
+                    eleItem.AppendChild(eleybksbm);
+                    eleItem.AppendChild(eleybysbm);
+                    eleItem.AppendChild(eleybbzm);
+                    eleItem.AppendChild(eledjh);
+                    eleItem.AppendChild(elemzlsh);
+                    eleItem.AppendChild(elevisitData);
+                    eleItem.AppendChild(eleSequenceNos);
+
+                    eleItems.AppendChild(eleItem);
+                }
+
+                elerspCode.InnerText = "1";
+                elerspMsg.InnerText = resultMessage;
+
+                outParm = docResponseRoot.OuterXml;
+            }
+            catch (Exception ex)
+            {
+                elerspCode.InnerText = "0";
+                elerspMsg.InnerText = ex.Message;
+                outParm = docResponseRoot.OuterXml;
+                Log4NetHelper.Error("003 同步医生排班信息接口", ex);
+                return -1;
+            }
+            return 0;
+        }
+
+
+        private int PreCost2095(string residenceNo, string patientID, XmlNode ndApplyItems, 
+           // out string sequenceNos, out string applyNos,
+            out XmlNode ndSequenceNos, out decimal preCost,
+            out string errorMsg)
+        {
+            UtilityDAL utilityDAL = new UtilityDAL();
+            ndSequenceNos = null;
+            string tradeCode = "2095", clientType = "25";
+            preCost = 0;
+             errorMsg = "";
+            //applyNos = sequenceNos = "";
+            //=========================================================
+            XmlDocument docRequest = utilityDAL.GetRequestXmlDoc();
+            XmlNode ndRequest = docRequest.SelectSingleNode("Request");
+            ndRequest.SelectSingleNode("TradeCode").InnerText = tradeCode;
+            ndRequest.SelectSingleNode("ExtUserID").InnerText = "";
+            ndRequest.SelectSingleNode("ClientType").InnerText = clientType;
+
+
+            XmlElement eleIoFlag = docRequest.CreateElement("IoFlag");
+            eleIoFlag.InnerText = "0";
+            ndRequest.AppendChild(eleIoFlag);
+
+            XmlElement eleResidenceNo = docRequest.CreateElement("ResidenceNo");
+            eleResidenceNo.InnerText = residenceNo;
+            ndRequest.AppendChild(eleResidenceNo);
+
+            XmlElement elePatientID = docRequest.CreateElement("PatientID");
+            elePatientID.InnerText = patientID;
+            ndRequest.AppendChild(elePatientID);
+
+
+            XmlElement eleApplyItems = docRequest.CreateElement("ApplyItems");
+            eleApplyItems.InnerXml = ndApplyItems.InnerXml;
+            ndRequest.AppendChild(eleApplyItems);
+
+            XmlElement eleBankDate = docRequest.CreateElement("BankDate");
+            eleBankDate.InnerText = DateTime.Now.ToString("yyyyMMddhhmmss");
+            ndRequest.AppendChild(eleBankDate);
+
+            ndRequest.SelectSingleNode("PublicKey").InnerText = publicKey;
+            ndRequest.SelectSingleNode("Signature").InnerText = signature;
+            //========================================================
+
+            string outParm;
+            HisWSSelfService hisWSSelfService = new HisWSSelfService();
+            hisWSSelfService.Url = serviceURL;
+            outParm = hisWSSelfService.BankService(ndRequest.OuterXml);
+            XmlDocument docResponse = new XmlDocument();
+            docResponse.LoadXml(outParm);
+            XmlNode ndResponse = docResponse.SelectSingleNode("Response");
+            string resultCode, resultMessage;
+
+            resultCode = ndResponse.SelectSingleNode("ResultCode").InnerText;
+            resultMessage = ndResponse.SelectSingleNode("ResultContent").InnerText;
+
+            if (resultCode != "0000")
+            {
+                errorMsg = resultMessage;
+                return -1;
+            }
+            long cycleNum;
+            cycleNum = long.Parse(docResponse.SelectSingleNode("Response/CycleNum").InnerText);
+            if (cycleNum <= 0)
+            {
+                return -1;
+            }
+            ndSequenceNos = ndResponse.SelectSingleNode("SequenceNos");           
+
+            preCost = decimal.Parse(ndResponse.SelectSingleNode("PreCost").InnerText);
+            return 0;
+
+        }
+        #endregion
+
+        #region 012 获取划价单明细接口
+        /// <summary>
+        /// 012 获取划价单明细接口
+        /// </summary>
+        /// <param name="docRequestPre"></param>
+        /// <param name="outParm"></param>
+        /// <returns></returns>
+        public int GetPreNosDetailInfo(XmlDocument docRequestPre, out string outParm)
+        {
+            StringBuilder sql = new StringBuilder();
+            string sequenceNos;
+            UtilityDAL utilityDAL = new UtilityDAL();
+            //XmlDocument docResponse = utilityDAL.GetResponseXmlDoc();
+            //XmlNode ndResponse = docResponse.SelectSingleNode("Response");
+
+            XmlDocument docResponseRoot = utilityDAL.GetResponseNjpkQueryXmlDoc();
+            XmlNode ndResRoot = docResponseRoot.SelectSingleNode("root");
+            XmlNode ndReqRoot = docRequestPre.SelectSingleNode("/root");
+
+            XmlElement elePriceItems = docResponseRoot.CreateElement("PriceItems");
+            ndResRoot.AppendChild(elePriceItems);
+
+            XmlElement elerspCode = docResponseRoot.CreateElement("rspCode");
+            ndResRoot.AppendChild(elerspCode);
+
+            XmlElement elerspMsg = docResponseRoot.CreateElement("rspMsg");
+            ndResRoot.AppendChild(elerspMsg);
+
+            sequenceNos = ndReqRoot.SelectSingleNode("preno").InnerText;
+            sql.Clear();
+            sql.Append(@"
+                select *
+                  from dispensary_sick_price_item a
+                 where sequence_no in (" + "'" + string.Join("','", sequenceNos.Split(',')) + "'" + ")"
+                 );
+            DataTable dtPriceItem = Select(sql.ToString(), null, "PriceItem");
+            DataSet dsPriceItems = new DataSet("PriceItems");
+
+            dsPriceItems.Tables.Add(dtPriceItem);
+            string priceItemsXml = dsPriceItems.GetXml();
+            priceItemsXml = priceItemsXml.Replace("SEQUENCE_NO", "SequenceNo");
+
+            XmlDocument docPriceItems = new XmlDocument();
+            docPriceItems.LoadXml(priceItemsXml);
+
+            XmlNode ndVisitInfos = docPriceItems.SelectSingleNode("PriceItems");
+            elePriceItems.InnerXml = ndVisitInfos.InnerXml;
+
+            elerspCode.InnerText = "0000";
+            elerspMsg.InnerText = "交易成功";
+            outParm = ndResRoot.OuterXml;
+            return 0; 
+        }
+        #endregion
+
+        #region 013 单张划价单缴费
+        /// <summary>
+        /// 013 单张划价单缴费
+        /// </summary>
+        /// <param name="docRequestPre"></param>
+        /// <param name="outParm"></param>
+        /// <returns></returns>
+        public int SaveBillItems(XmlDocument docRequestPre, out string outParm)
+        {
+            ;
+            UtilityDAL utilityDAL = new UtilityDAL();
+            XmlDocument docResponseRoot = utilityDAL.GetResponseNjpkQueryXmlDoc();
+            XmlNode ndResRoot = docResponseRoot.SelectSingleNode("root");
+            XmlNode ndReqRoot = docRequestPre.SelectSingleNode("root");
+
+            XmlElement elerspCode = docResponseRoot.CreateElement("rspCode");
+            ndResRoot.AppendChild(elerspCode);
+
+            XmlElement elerspMsg = docResponseRoot.CreateElement("rspMsg");
+            ndResRoot.AppendChild(elerspMsg);
+
+            string visitNo, empNameNo, visitData, sequenceNos;
+            empNameNo = "system";
+
+            try
+            {
+                visitData = ndReqRoot.SelectSingleNode("visitData").InnerText;
+                sequenceNos = ndReqRoot.SelectSingleNode("SequenceNos").InnerXml;
+                JObject joVisitData = JObject.Parse(visitData);
+                visitNo = joVisitData["ResidenceNo"].ToString();
+
+                string charges; string insurFund;
+                string insurAccountCharges; string insurHospCharges; string insurBalance;
+                string insurSafe; string insurOfficialCharges; string insuranceNo;
+                string safetyNo; string insuranceCardNo; string returnText;
+                string businessNo; string insurApplyNo, cost;
+                string payType, rateType;
+                string bankDate, inCardNo;
+                charges = insurFund = "0";
+                insurAccountCharges = insurHospCharges = insurBalance = "0";
+                insurSafe = insurOfficialCharges = insuranceNo = "0";
+                safetyNo = insuranceCardNo = returnText = "0";
+                businessNo = insurApplyNo = "0";
+
+                string bankTradeNo;
+                string siOutParam, machineCode;
+                bankTradeNo = ndReqRoot.SelectSingleNode("inJfStreamNo").InnerText;
+                inCardNo = ndReqRoot.SelectSingleNode("inCardNo").InnerText;
+                siOutParam = ndReqRoot.SelectSingleNode("siOutParam").InnerText;
+                machineCode = "";
+                if (ndReqRoot.SelectSingleNode("machineCode") != null)
+                    machineCode = ndReqRoot.SelectSingleNode("machineCode").InnerText;
+
+                string money, inBankReturnCode, inBankcard;
+
+                inBankReturnCode = ndReqRoot.SelectSingleNode("inBankReturnCode").InnerText.Trim();
+                inBankcard = ndReqRoot.SelectSingleNode("inBankcard").InnerText.Trim();
+                money = ndReqRoot.SelectSingleNode("inCashPay").InnerText.Trim();
+                rateType = ndReqRoot.SelectSingleNode("inPersonnelType").InnerText;
+                payType = ndReqRoot.SelectSingleNode("inPayMethod").InnerText;
+                empNameNo = ndReqRoot.SelectSingleNode("inReceiverNo").InnerText;
+                cost = ndReqRoot.SelectSingleNode("inJeall").InnerText;
+
+
+                bankTradeNo = bankTradeNo + "|" + inBankReturnCode;//缴费订单号+银行返回码
+
+                string[] outArray;
+                switch (rateType)
+                {
+                    case "H": //农合
+                        break;
+                    case "F"://医保
+                        outArray = siOutParam.Split('|');
+                        insurFund = ( decimal.Parse(outArray[1])+ decimal.Parse(outArray[2]) + decimal.Parse(outArray[3]) + decimal.Parse(outArray[4])).ToString();
+                        insurAccountCharges = decimal.Parse(outArray[5]).ToString();
+                        charges = decimal.Parse(outArray[6]).ToString();
+                        break;
+                    default://
+                        break;
+                }
+
+
+                bankDate = DateTime.Now.ToString("yyyyMMddHHmmss");
+                //insurFund = (decimal.Parse(cost) - decimal.Parse(charges)).ToString();
+
+                string cardId, admitDate, applyDeptName;
+                string patientID, receiptNo;
+                cardId = joVisitData["PayCardNo"].ToString();
+                rateType = joVisitData["RateType"].ToString();
+                admitDate = joVisitData["AdmitDate"].ToString();
+                applyDeptName = joVisitData["ApplyDeptName"].ToString();
+                patientID = joVisitData["PatientID"].ToString();
+
+                
+
+                if (cardId != inCardNo)
+                {
+                    elerspCode.InnerText = "0";
+                    elerspMsg.InnerText = "录入的卡号， 与原卡号不一致！"; ;
+                    outParm = docResponseRoot.OuterXml;
+                    return -1;
+                }
+
+
+                string errorMsg;
+                if (ChargeSettle2094(visitNo, money, cost,  insurFund,
+                      insurAccountCharges, insurHospCharges, insurBalance,
+                      insurSafe, insurOfficialCharges, insuranceNo,
+                      safetyNo, insuranceCardNo, returnText,
+                      businessNo, insurApplyNo, "2"/*仅结算未扣费项目*/,
+                      visitData, sequenceNos, payType, bankTradeNo, empNameNo,
+                      bankDate, machineCode, out receiptNo, out string outParmXml, 
+                      out errorMsg) < 0)
+                {
+                    elerspCode.InnerText = "0";
+                    elerspMsg.InnerText = errorMsg;
+                    outParm = docResponseRoot.OuterXml;
+                    return -1;
+                }
+
+                XmlDocument docResponse = new XmlDocument();
+                docResponse.LoadXml(outParmXml);
+                XmlNode ndResponse = docResponse.SelectSingleNode("Response");
+                string resultCode, settleNo;
+
+                resultCode = ndResponse.SelectSingleNode("ResultCode").InnerText;
+                settleNo = ndResponse.SelectSingleNode("SettleNo").InnerText;
+
+                XmlElement eleitems = docResponseRoot.CreateElement("items");
+                ndResRoot.AppendChild(eleitems);                
+
+                XmlElement eleooutJfStreamno = docResponseRoot.CreateElement("outJfStreamno");
+                eleooutJfStreamno.InnerText = bankTradeNo;
+                ndResRoot.AppendChild(eleooutJfStreamno);
+
+                XmlElement eleooutFlowJfid = docResponseRoot.CreateElement("outFlowJfid");
+                eleooutFlowJfid.InnerText = settleNo;
+                ndResRoot.AppendChild(eleooutFlowJfid);
+
+                XmlElement eleoutRcptno = docResponseRoot.CreateElement("outRcptno");
+                eleoutRcptno.InnerText = receiptNo;
+                ndResRoot.AppendChild(eleoutRcptno);
+
+                elerspCode.InnerText = "1";
+                elerspMsg.InnerText = "交易成功！";
+
+                outParm = docResponseRoot.OuterXml;
+            }
+            catch (Exception ex)
+            {
+                elerspCode.InnerText = "0";
+                elerspMsg.InnerText = ex.Message;
+                outParm = docResponseRoot.OuterXml;
+                Log4NetHelper.Error("挂号", ex);
                 return -1;
             }
             return 0;

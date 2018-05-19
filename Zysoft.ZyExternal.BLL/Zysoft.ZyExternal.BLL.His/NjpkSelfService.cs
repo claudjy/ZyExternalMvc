@@ -331,5 +331,118 @@ namespace Zysoft.ZyExternal.BLL.His
             }
             return 0;
         }
+
+        public int getPreNosInfo(XmlDocument docRequestPre, out string outParm)
+        {
+            outParm = "";
+            try
+            {
+                using (OracleConnection dbCon = OracleConnect.Connect())
+                {
+                    OracleTransaction dbTran = dbCon.BeginTransaction();
+                    CreateDBTransaction(dbCon, dbTran);
+                    try
+                    { 
+                        NjpkSelfServiceDal serviceDal = new NjpkSelfServiceDal();
+                        if (serviceDal.getPreNosInfo(docRequestPre, out outParm) < 0)
+                        {
+                            dbTran.Rollback();
+                        }
+                        else
+                        {
+                            dbTran.Commit();
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        dbTran.Rollback();
+                        throw ex;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return -1;
+            }
+            return 0;
+        }
+
+        public int GetPreNosDetailInfo(XmlDocument docRequestPre, out string outParm)
+        {
+            outParm = "";
+            try
+            {
+                using (OracleConnection dbCon = OracleConnect.Connect())
+                {
+                    OracleTransaction dbTran = dbCon.BeginTransaction();
+                    CreateDBTransaction(dbCon, dbTran);
+                    try
+                    {
+                        NjpkSelfServiceDal serviceDal = new NjpkSelfServiceDal();
+                        if (serviceDal.GetPreNosDetailInfo(docRequestPre, out outParm) < 0)
+                        {
+                            dbTran.Rollback();
+                        }
+                        else
+                        {
+                            dbTran.Commit();
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        dbTran.Rollback();
+                        throw ex;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return -1;
+            }
+            return 0;
+        }
+
+        #region 013 单张划价单缴费
+        /// <summary>
+        /// 013 单张划价单缴费
+        /// </summary>
+        /// <param name="docRequestPre"></param>
+        /// <param name="outParm"></param>
+        /// <returns></returns>
+        public int SaveBillItems(XmlDocument docRequestPre, out string outParm)
+        {
+            outParm = "";
+            try
+            {
+                using (OracleConnection dbCon = OracleConnect.Connect())
+                {
+                    OracleTransaction dbTran = dbCon.BeginTransaction();
+                    CreateDBTransaction(dbCon, dbTran);
+                    try
+                    {
+                        NjpkSelfServiceDal serviceDal = new NjpkSelfServiceDal();
+                        if (serviceDal.SaveBillItems(docRequestPre, out outParm) < 0)
+                        {
+                            dbTran.Rollback();
+                        }
+                        else
+                        {
+                            dbTran.Commit();
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        dbTran.Rollback();
+                        throw ex;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return -1;
+            }
+            return 0;
+        }
+        #endregion
     }
 }

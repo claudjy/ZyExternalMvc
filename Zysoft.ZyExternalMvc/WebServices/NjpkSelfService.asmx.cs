@@ -267,5 +267,80 @@ namespace Zysoft.ZyExternalMvc.WebServices
             return outParm;
         }
         #endregion
+
+        #region 011 获取划价单接口
+        /// <summary>
+        /// 011 获取划价单接口
+        /// </summary>
+        /// <param name="docRequest"></param> 
+        /// <param name="outParm"></param>
+        /// <returns></returns> 
+        [WebMethod(Description = "011 获取划价单接口")]
+        public string getPreNosInfo(string InXml)
+        {
+            string outParm;
+            outParm = "";
+            INjpkSelfService selfService = ContainerFactory.GetContainer().Resolve<INjpkSelfService>();
+
+
+            XmlDocument docRequest = new XmlDocument();
+            docRequest.LoadXml(InXml);
+
+            selfService.getPreNosInfo(docRequest, out outParm);
+
+            return outParm;
+        }
+        #endregion
+
+        #region 012 获取划价单明细接口
+        /// <summary>
+        /// 012 获取划价单明细接口
+        /// </summary>
+        /// <param name="docRequestPre"></param>
+        /// <param name="outParm"></param>
+        /// <returns></returns>
+        [WebMethod(Description = "012 获取划价单明细接口")]
+        public string GetPreNosDetailInfo(string InXml)
+        {
+            string outParm; 
+            outParm = "";
+            INjpkSelfService selfService = ContainerFactory.GetContainer().Resolve<INjpkSelfService>();
+
+
+            XmlDocument docRequest = new XmlDocument();
+            docRequest.LoadXml(InXml);
+
+            selfService.GetPreNosDetailInfo(docRequest, out outParm);
+
+            return outParm;
+        }
+        #endregion
+
+        #region 013 单张划价单缴费
+        /// <summary>
+        /// 013 单张划价单缴费
+        /// </summary>
+        /// <param name="docRequestPre"></param>
+        /// <param name="outParm"></param>
+        /// <returns></returns>
+        [WebMethod(Description = "013 单张划价单缴费")]
+        public string SaveBillItems(string InXml)
+        {
+            string outParm;
+            outParm = "";
+            INjpkSelfService selfService = ContainerFactory.GetContainer().Resolve<INjpkSelfService>();
+
+
+            XmlDocument docRequest = new XmlDocument();
+            docRequest.LoadXml(InXml);
+
+            selfService.SaveBillItems(docRequest, out outParm);
+
+            return outParm;
+        }
+        #endregion
+
+
+
     }
 }
