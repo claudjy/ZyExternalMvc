@@ -53,6 +53,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BankTradeLogDal.cs" />
     <Compile Include="DHCRisDal.cs" />
     <Compile Include="NjpkSelfServiceDal.cs" />
     <Compile Include="Properties\Settings.Designer.cs">
