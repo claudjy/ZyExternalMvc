@@ -13,6 +13,7 @@ using Zysoft.FrameWork.WebService;
 using Zysoft.ZyExternal.DAL.His.RemoteService;
 using System.Web.Configuration;
 using Newtonsoft.Json.Linq;
+using Newtonsoft.Json;
 
 namespace Zysoft.ZyExternal.DAL.His
 {
@@ -1184,7 +1185,7 @@ namespace Zysoft.ZyExternal.DAL.His
                 }
 
                 string settleNo;
-                if (ChargeSettle2094(visitNo, money, charges, insurFund,
+                if (ChargeSettle2094(visitNo, money, "0", charges, insurFund,
                       insurAccountCharges, insurHospCharges, insurBalance,
                       insurSafe, insurOfficialCharges, insuranceNo,
                       safetyNo, insuranceCardNo, tradeText, returnText,
@@ -1259,7 +1260,7 @@ namespace Zysoft.ZyExternal.DAL.His
             return 0;
         }
 
-        private int ChargeSettle2094(string visitNo, string money, string cost,
+        private int ChargeSettle2094(string visitNo, string money, string preCharge, string charge,
                      string insurFund, string insurAccountCharges, string insurHospCharges, string insurBalance,
                      string insurSafe, string insurOfficialCharges, string insuranceNo,
                      string safetyNo, string insuranceCardNo, string tradeText, string returnText,
@@ -1318,7 +1319,7 @@ namespace Zysoft.ZyExternal.DAL.His
                 ndRequest.AppendChild(eleMoney);
 
                 XmlElement eleCharges = docRequest.CreateElement("Charges");
-                eleCharges.InnerText = "0";
+                eleCharges.InnerText = charge;
                 ndRequest.AppendChild(eleCharges);
 
                 XmlElement eleInsurFund = docRequest.CreateElement("InsurFund");
@@ -1374,16 +1375,18 @@ namespace Zysoft.ZyExternal.DAL.His
                 ndRequest.AppendChild(eleVisitData);
 
                 XmlElement elePreCharge = docRequest.CreateElement("PreCharge");
-                elePreCharge.InnerText = cost;
+                elePreCharge.InnerText = preCharge;
                 ndRequest.AppendChild(elePreCharge);
 
                 XmlElement elePreCost = docRequest.CreateElement("PreCost");
-                elePreCost.InnerText = cost;
+                elePreCost.InnerText = preCharge;
                 ndRequest.AppendChild(elePreCost);
 
                 XmlElement eleTradeText = docRequest.CreateElement("TradeText");
                 eleTradeText.InnerText = tradeText;
                 ndRequest.AppendChild(eleTradeText);
+
+                
 
                 XmlElement elePreDerate = docRequest.CreateElement("PreDerate");
                 elePreDerate.InnerText = "0";
@@ -2289,12 +2292,13 @@ namespace Zysoft.ZyExternal.DAL.His
                     diagnosisCode = ndVisitInfo.SelectSingleNode("DiagnosisCode").InnerText;
                     diagnosisName = ndVisitInfo.SelectSingleNode("DiagnosisName").InnerText;
                     visitData = ndVisitInfo.SelectSingleNode("VisitData").InnerText;
+                    if (diagnosisCode.IsNull()) diagnosisCode = "Z00.001";
 
                     sql.Clear();
                     sql.Append(@"select city_insurance_code
                                    from ICD10_DICT
-                                  where type = 'X'
-                                    and ICD10_CODE = :arg_diagnosis_code
+                                  where ICD10_CODE = :arg_diagnosis_code
+                                    and city_insurance_code is not null
                                     and rownum = 1 ");
                     OracleParameter[] paraIcd10Dict = {
                                               new OracleParameter("arg_diagnosis_code", diagnosisCode)
@@ -2304,16 +2308,27 @@ namespace Zysoft.ZyExternal.DAL.His
                     {
                         insuranceDiseas = dtIcd10Dict.Rows[0]["city_insurance_code"].ToString();
                     }
-                    if (insuranceDiseas.IsNull()) insuranceDiseas = "";
+                    if (insuranceDiseas.IsNull()) insuranceDiseas = "Z00.001";
 
                     sql.Clear();
                     sql.Append(@"");
 
-                     XmlNode ndApplyItems = ndResponse.SelectSingleNode("ApplyItems");
+                    XmlNode ndApplyItems = ndResponse.SelectSingleNode("ApplyItems");
+                    XmlElement ndApplyItemPara = docResponse.CreateElement("ApplyItems");
+                    
+                    foreach (XmlNode ndTemp in ndApplyItems.SelectNodes("ApplyItem"))
+                    {
+                        if (ndTemp.SelectSingleNode("ResidenceNo").InnerText == residenceNo)
+                            ndApplyItemPara .AppendChild(ndTemp);
+
+                    }
+                    if (ndApplyItemPara.SelectNodes("ApplyItem").Count == 0) continue;
+
                     XmlNode ndSequenceNos;
-                    if (PreCost2095(residenceNo, sickId, ndApplyItems, out ndSequenceNos, // out sequenceNos, out djh,
+                    if (PreCost2095(residenceNo, sickId, ndApplyItemPara, out ndSequenceNos, // out sequenceNos, out djh,
                         out preCost, out errorMsg) < 0)
                     {
+                        elerspCode.InnerText = "0";
                         elerspMsg.InnerText = errorMsg;
                         outParm = docResponseRoot.OuterXml;
                         return -1;
@@ -2360,7 +2375,7 @@ namespace Zysoft.ZyExternal.DAL.His
                     XmlElement elevisitData = docResponseRoot.CreateElement("visitData");
                     XmlElement eleSequenceNos = docResponseRoot.CreateElement("SequenceNos");
 
-                    elepreNo.InnerText = sequenceNos;
+                    elepreNo.InnerText = djh;
                     eleregisterFlow.InnerText = residenceNo;
                     elepatientId.InnerText = sickId;
                     elepatientName.InnerText = sickName;
@@ -2379,11 +2394,11 @@ namespace Zysoft.ZyExternal.DAL.His
                     eleybksbm.InnerText = applyDept;
                     eleksbm.InnerText = applyDept;
                     eleybysbm.InnerText = doctor;
-                    eleybbzm.InnerText = "";
+                    eleybbzm.InnerText = insuranceDiseas;
                     eledjh.InnerText = insurApplyNo;
                     elemzlsh.InnerText = residenceNo;
                     elevisitData.InnerText = visitData;
-                    eleSequenceNos.InnerXml = ndSequenceNos.InnerXml;
+                    eleSequenceNos.InnerXml = JsonConvert.SerializeXmlNode(ndSequenceNos);
 
                     eleItem.AppendChild(elepreNo);
                     eleItem.AppendChild(eleregisterFlow);
@@ -2495,6 +2510,7 @@ namespace Zysoft.ZyExternal.DAL.His
             cycleNum = long.Parse(docResponse.SelectSingleNode("Response/CycleNum").InnerText);
             if (cycleNum <= 0)
             {
+                errorMsg = "预结算数据为空！";
                 return -1;
             }
             ndSequenceNos = ndResponse.SelectSingleNode("SequenceNos");           
@@ -2533,19 +2549,140 @@ namespace Zysoft.ZyExternal.DAL.His
             XmlElement elerspMsg = docResponseRoot.CreateElement("rspMsg");
             ndResRoot.AppendChild(elerspMsg);
 
-            sequenceNos = ndReqRoot.SelectSingleNode("preno").InnerText;
+            sequenceNos = ndReqRoot.SelectSingleNode("ybcfh").InnerText;
             sql.Clear();
             sql.Append(@"
-                select *
-                  from dispensary_sick_price_item a
-                 where sequence_no in (" + "'" + string.Join("','", sequenceNos.Split(',')) + "'" + ")"
+                select s.sequence_no preNo,
+                       decode(upper(substr(s.item_class, 1, 1)),
+                              'A',
+                              '0',
+                              'B',
+                              '0',
+                              'C',
+                              '0',
+                              '1') item_Class,
+                       s.item_name itemName,
+                       s.item_code itemCode,
+                       s.spec itemSpec,
+                       s.quantity itemAmount,
+                       s.unit itemUnit,
+                       decode(upper(substr(s.item_class, 1, 1)),
+                              'A',
+                              round(s.price / (select m.pack_spec
+                                                 from physic_dict_table m
+                                                where m.physic_code = s.item_code),
+                                    4),
+                              'B',
+                              round(s.price / (select m.pack_spec
+                                                 from physic_dict_table m
+                                                where m.physic_code = s.item_code),
+                                    4),
+                              'C',
+                              round(s.price / (select m.pack_spec
+                                                 from physic_dict_table m
+                                                where m.physic_code = s.item_code),
+                                    4),
+                              s.price) itemPrice,
+                       decode(upper(substr(s.item_class, 1, 1)),
+                              'A',
+                              (round(s.price /
+                                     (select m.pack_spec
+                                        from physic_dict_table m
+                                       where m.physic_code = s.item_code),
+                                     4) * s.quantity),
+                              'B',
+                              (round(s.price /
+                                     (select m.pack_spec
+                                        from physic_dict_table m
+                                       where m.physic_code = s.item_code),
+                                     4) * s.quantity),
+                              'C',
+                              (round(s.price /
+                                     (select m.pack_spec
+                                        from physic_dict_table m
+                                       where m.physic_code = s.item_code),
+                                     4) * s.quantity),
+                              s.cost) itemCharges,
+                       '' dupInvoiceCode,
+                       '' dupInvoiceName,
+                       '' excDeptID,
+                       '' excDeptName,
+                       '' price,
+                       '' orderNo,
+                       '' windowNo,
+                       decode(s.receipt_class,
+                              '01',
+                              '1',
+                              '02',
+                              '1',
+                              '03',
+                              '1',
+                              '20',
+                              '3',
+                              '2') xmzl,
+                       (select a.price_item_name
+                          from insurance_price_item_dict a, rate_type_dict b
+                         where a.rate_type = b.insur_rate_type
+                           and b.rate_type_code = t.rate_type
+                           and a.price_item_code = r.insurance_price_item_code) xmmc,
+                       r.insurance_price_item_code xmzbm,
+                       s.quantity count,
+                       s.price price,
+                       s.cost amount,
+                       (decode(s.item_class,
+                               'C02',
+                               (select c.lay_physic_days
+                                  from v_lay_physic_union c
+                                 where c.apply_no = s.apply_no),
+                               '')) zyypfs,
+                       '1' zxjjbs,
+                       (nvl((select d.city_insurance_code
+                              from ICD10_DICT d
+                             where d.icd10_code = 'Z00.001'
+                               and d.city_insurance_code is not null
+                               and rownum = 1),
+                            'Z00.001')) bzbm,
+                       s.*
+
+                  from dispensary_sick_price_item s,
+                       dispensary_sick_cure_info  t,
+                       pricelist_dict_detail      r
+                 where s.residence_no = t.nullah_number
+                   and s.sick_id = t.sick_id
+                   and s.rate_type = r.rate_type(+)
+                   and s.item_code = r.item_code(+)
+                   and s.sequence_no in (" + "'" + string.Join("','", sequenceNos.Split(',')) + "'" + ")"
                  );
             DataTable dtPriceItem = Select(sql.ToString(), null, "PriceItem");
             DataSet dsPriceItems = new DataSet("PriceItems");
 
             dsPriceItems.Tables.Add(dtPriceItem);
             string priceItemsXml = dsPriceItems.GetXml();
-            priceItemsXml = priceItemsXml.Replace("SEQUENCE_NO", "SequenceNo");
+            priceItemsXml = priceItemsXml.Replace("PRENO", "preNo");
+            priceItemsXml = priceItemsXml.Replace("ITEMCLASS", "itemClass");
+            priceItemsXml = priceItemsXml.Replace("ITEMNAME", "itemName");
+            priceItemsXml = priceItemsXml.Replace("ITEMCODE", "itemCode");
+            priceItemsXml = priceItemsXml.Replace("ITEMSPEC", "itemSpec");
+            priceItemsXml = priceItemsXml.Replace("ITEMAMOUNT", "itemAmount");
+            priceItemsXml = priceItemsXml.Replace("ITEMUNIT", "itemUnit");
+            priceItemsXml = priceItemsXml.Replace("ITEMPRICE", "itemPrice");
+            priceItemsXml = priceItemsXml.Replace("ITEMCHARGES", "itemCharges");
+            priceItemsXml = priceItemsXml.Replace("DUPINVOICECODE", "dupInvoiceCode");
+            priceItemsXml = priceItemsXml.Replace("DUPINVOICENAME", "dupInvoiceName");
+            priceItemsXml = priceItemsXml.Replace("EXCDEPTID", "excDeptID");
+            priceItemsXml = priceItemsXml.Replace("EXCDEPTNAME", "excDeptName");
+            priceItemsXml = priceItemsXml.Replace("PRICE", "price");
+            priceItemsXml = priceItemsXml.Replace("ORDERNO", "orderNo");
+            priceItemsXml = priceItemsXml.Replace("WINDOWNO", "windowNo");
+            priceItemsXml = priceItemsXml.Replace("XMZL", "xmzl");
+            priceItemsXml = priceItemsXml.Replace("XMMC", "xmmc");
+            priceItemsXml = priceItemsXml.Replace("XMZBM", "xmzbm");
+            priceItemsXml = priceItemsXml.Replace("COUNT", "count");
+            priceItemsXml = priceItemsXml.Replace("PRICE", "price");
+            priceItemsXml = priceItemsXml.Replace("AMOUNT", "amount");
+            priceItemsXml = priceItemsXml.Replace("ZYYPFS", "zyypfs");
+            priceItemsXml = priceItemsXml.Replace("ZXJJBS", "zxjjbs");
+            priceItemsXml = priceItemsXml.Replace("BZBM", "bzbm");
 
             XmlDocument docPriceItems = new XmlDocument();
             docPriceItems.LoadXml(priceItemsXml);
@@ -2581,15 +2718,18 @@ namespace Zysoft.ZyExternal.DAL.His
             XmlElement elerspMsg = docResponseRoot.CreateElement("rspMsg");
             ndResRoot.AppendChild(elerspMsg);
 
-            string visitNo, empNameNo, visitData, sequenceNos;
+            string visitNo, empNameNo, visitData, sequenceNos, sequenceNoJson;
             empNameNo = "system";
+            string preCharge;
 
             try
             {
                 visitData = ndReqRoot.SelectSingleNode("visitData").InnerText;
-                sequenceNos = ndReqRoot.SelectSingleNode("SequenceNos").InnerXml;
+                sequenceNoJson = ndReqRoot.SelectSingleNode("SequenceNos").InnerText;
                 JObject joVisitData = JObject.Parse(visitData);
                 visitNo = joVisitData["ResidenceNo"].ToString();
+                XmlDocument docXml = JsonConvert.DeserializeXmlNode(sequenceNoJson);
+                sequenceNos = docXml.SelectSingleNode("SequenceNos").InnerXml;
 
                 string charges; string insurFund;
                 string insurAccountCharges; string insurHospCharges; string insurBalance;
@@ -2621,13 +2761,16 @@ namespace Zysoft.ZyExternal.DAL.His
                 rateType = ndReqRoot.SelectSingleNode("inPersonnelType").InnerText;
                 payType = ndReqRoot.SelectSingleNode("inPayMethod").InnerText;
                 empNameNo = ndReqRoot.SelectSingleNode("inReceiverNo").InnerText;
-                cost = ndReqRoot.SelectSingleNode("inJeall").InnerText;
+                preCharge = ndReqRoot.SelectSingleNode("inJeall").InnerText;
 
-                string tradeText;
+                string tradeText, registerInparm;
                 tradeText = ndReqRoot.SelectSingleNode("siInParam").InnerText;
                 returnText = ndReqRoot.SelectSingleNode("siOutParam").InnerText;
+                registerInparm = ndReqRoot.SelectSingleNode("siDjParam").InnerText;
 
                 bankTradeNo = bankTradeNo + "|" + inBankReturnCode;//缴费订单号+银行返回码
+
+                
 
                 string[] outArray;
                 switch (rateType)
@@ -2635,10 +2778,37 @@ namespace Zysoft.ZyExternal.DAL.His
                     case "H": //农合
                         break;
                     case "F"://医保
-                        outArray = siOutParam.Split('|');
-                        insurFund = ( decimal.Parse(outArray[1])+ decimal.Parse(outArray[2]) + decimal.Parse(outArray[3]) + decimal.Parse(outArray[4])).ToString();
-                        insurAccountCharges = decimal.Parse(outArray[5]).ToString();
-                        charges = decimal.Parse(outArray[6]).ToString();
+                        outArray = returnText.Split('^');
+                        if (outArray.Length > 2)
+                        {
+                            string[] settleList2 = outArray[1].Split('|');
+                            string insur1, insur2, insur3, insur4;
+                            if (settleList2.Length > 18)
+                            {
+
+                                insur1 = settleList2[1];
+                                insur2 = settleList2[2];
+                                insur3 = settleList2[3];
+                                insur4 = settleList2[4];
+                                insurFund = (decimal.Parse(insur1) + decimal.Parse(insur2)
+                                    + decimal.Parse(insur3) + decimal.Parse(insur4)).ToString();
+                                insurAccountCharges = settleList2[5];
+                                charges = settleList2[6];
+                                insurBalance = settleList2[12];
+
+                            }
+                        }
+                        string[] inList1 = tradeText.Split('^');
+                        if (inList1.Length > 8)
+                        {
+                            businessNo = inList1[3];
+
+                            string[] regList = inList1[7].Split('|');
+                            insuranceNo = regList[0];
+                            safetyNo = regList[10];
+                            insuranceCardNo = safetyNo;
+                        }
+
                         break;
                     default://
                         break;
@@ -2666,40 +2836,18 @@ namespace Zysoft.ZyExternal.DAL.His
                     return -1;
                 }
 
-                string[] settleList1 = returnText.Split('^');
-                if (settleList1.Length > 2)
+               
+
+                
+
+                if (rateType == "F")
                 {
-                    string[] settleList2 = settleList1[1].Split('|');
-                    string insur1, insur2, insur3, insur4;
-                    if (settleList2.Length > 18)
-                    {
-
-                        insur1 = settleList2[1];
-                        insur2 = settleList2[2];
-                        insur3 = settleList2[3];
-                        insur4 = settleList2[4];
-                        insurFund = (decimal.Parse(insur1) + decimal.Parse(insur2)
-                            + decimal.Parse(insur3) + decimal.Parse(insur4)).ToString();
-                        insurAccountCharges = settleList2[5];
-                        charges = settleList2[6];
-                        insurBalance = settleList2[12];
-
-                    }
+                    BankTradeLogDal bankTradeLogDal = new BankTradeLogDal();
+                    //bankTradeLogDal.CreateSettleInfo(registerInparm, tradeText, returnText, patientID, visitNo, rateType, LostCash)
                 }
-
-                string[] inList1 = tradeText.Split('^');
-                if (inList1.Length > 8)
-                {
-                    businessNo = inList1[3];
-
-                    string[] regList = inList1[7].Split('|');
-                    insuranceNo = regList[0];
-                    safetyNo = regList[10];
-                    insuranceCardNo = safetyNo;
-                }
-
+                
                 string errorMsg;
-                if (ChargeSettle2094(visitNo, money, cost,  insurFund,
+                if (ChargeSettle2094(visitNo, money, preCharge, charges,  insurFund,
                       insurAccountCharges, insurHospCharges, insurBalance,
                       insurSafe, insurOfficialCharges, insuranceNo,
                       safetyNo, insuranceCardNo, tradeText, returnText,
@@ -2709,6 +2857,7 @@ namespace Zysoft.ZyExternal.DAL.His
                       out errorMsg) < 0)
                 {
                     elerspCode.InnerText = "0";
+                    if (errorMsg.IndexOf("不等于请求总金额") > 0) errorMsg = "医保金额与实际金额不一致！";
                     elerspMsg.InnerText = errorMsg;
                     outParm = docResponseRoot.OuterXml;
                     return -1;

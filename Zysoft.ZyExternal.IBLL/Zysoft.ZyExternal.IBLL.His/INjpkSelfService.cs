@@ -153,6 +153,7 @@ namespace Zysoft.ZyExternal.IBLL.His
         /// <param name="docRequestPre"></param>
         /// <param name="outParm"></param>
         /// <returns></returns>
+        [Log(Introduction = "013 单张划价单缴费", Order = 1)]
         int SaveBillItems(XmlDocument docRequestPre, out string outParm);
         #endregion
 
