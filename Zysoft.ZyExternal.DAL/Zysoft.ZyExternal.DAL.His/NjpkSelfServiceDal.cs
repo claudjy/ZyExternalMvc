@@ -20,7 +20,7 @@ namespace Zysoft.ZyExternal.DAL.His
     public class NjpkSelfServiceDal : DB
     {
         private const string publicKey = "sbAY2hSUbjpJOb67oaiqbg==";
-        private const string signature = "/sWSwSZx2KR8mOFTUdOqqTRXj+pI4H42ueEcqlwc0jjvdf0yHn64Xg==";
+        private const string signature = "/sWSwSZx2KR8mOFTUdOqqTRXj+pI4H42ueEcqlwc0jjqx9Rl23LDAA==";
         string serviceURL = "http://localhost:4940/webservices/WSSelfService.asmx";
 
         public NjpkSelfServiceDal()
@@ -2843,7 +2843,11 @@ namespace Zysoft.ZyExternal.DAL.His
                 if (rateType == "F")
                 {
                     BankTradeLogDal bankTradeLogDal = new BankTradeLogDal();
-                    //bankTradeLogDal.CreateSettleInfo(registerInparm, tradeText, returnText, patientID, visitNo, rateType, LostCash)
+                    decimal lostCash = 0;
+                    lostCash = decimal.Parse(preCharge) - (decimal.Parse(charges) + decimal.Parse(insurFund) +
+                     decimal.Parse(insurAccountCharges) + decimal.Parse(insurHospCharges) +
+                     decimal.Parse(insurSafe) + decimal.Parse(insurOfficialCharges));
+                    bankTradeLogDal.CreateSettleInfo(registerInparm, tradeText, returnText, patientID, visitNo, rateType, lostCash);
                 }
                 
                 string errorMsg;
