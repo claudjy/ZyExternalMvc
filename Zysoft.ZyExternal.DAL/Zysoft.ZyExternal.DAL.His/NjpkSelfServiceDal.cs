@@ -2310,10 +2310,43 @@ namespace Zysoft.ZyExternal.DAL.His
                 cycleNum = long.Parse(docResponse.SelectSingleNode("Response/CycleNum").InnerText);
                 if (cycleNum <= 0)
                 {
+                    elerspMsg.InnerText = "交易失败！";
+                    outParm = docResponseRoot.OuterXml;
+                    return -1;
+                }
+
+                //第二次调用
+                XmlNode ndApplyItems = ndResponse.SelectSingleNode("ApplyItems");
+                if (SendLisBeforeSettle(ndApplyItems, out outParm) < 0)
+                {
+                    elerspMsg.InnerText = outParm;
+                    outParm = docResponseRoot.OuterXml;
+                    return -1;
+                }
+                #region 
+
+                outParm = hisWSSelfService.BankService(ndRequest.OuterXml);
+                docResponse.LoadXml(outParm);
+                ndResponse = docResponse.SelectSingleNode("Response");
+
+                resultCode = ndResponse.SelectSingleNode("ResultCode").InnerText;
+                resultMessage = ndResponse.SelectSingleNode("ResultContent").InnerText;
+
+                if (resultCode != "0000")
+                {
+                    elerspMsg.InnerText = resultMessage;
+                    outParm = docResponseRoot.OuterXml;
+                    return -1;
+                }
+
+                cycleNum = long.Parse(docResponse.SelectSingleNode("Response/CycleNum").InnerText);
+                if (cycleNum <= 0)
+                {
                     elerspMsg.InnerText = "交易成功！";
                     outParm = docResponseRoot.OuterXml;
                     return -1;
                 }
+                #endregion
 
                 XmlElement eleItems = docResponseRoot.CreateElement("items");
                 ndResRoot.AppendChild(eleItems);
@@ -2351,7 +2384,7 @@ namespace Zysoft.ZyExternal.DAL.His
                     if (diagnosisCode.IsNull()) diagnosisCode = "Z00.001";
 
                     sql.Clear();
-                    sql.Append(@"select s.balance_interface balance_interface
+                    sql.Append(@"select t.balance_interface balance_interface
                                    from dispensary_sick_cure_info s , rate_type_dict t
                                   where s.rate_type = t.rate_type_code
                                     and s.sick_id = :arg_sick_id
@@ -2393,7 +2426,7 @@ namespace Zysoft.ZyExternal.DAL.His
                     sql.Clear();
                     sql.Append(@"");
 
-                    XmlNode ndApplyItems = ndResponse.SelectSingleNode("ApplyItems");
+                    ndApplyItems = ndResponse.SelectSingleNode("ApplyItems");
                     XmlElement ndApplyItemPara = docResponse.CreateElement("ApplyItems");
 
                     foreach (XmlNode ndTemp in ndApplyItems.SelectNodes("ApplyItem"))
@@ -2527,7 +2560,7 @@ namespace Zysoft.ZyExternal.DAL.His
                 elerspCode.InnerText = "0";
                 elerspMsg.InnerText = ex.Message;
                 outParm = docResponseRoot.OuterXml;
-                Log4NetHelper.Error("003 同步医生排班信息接口", ex);
+                Log4NetHelper.Error("011 获取划价单接口", ex);
                 return -1;
             }
             return 0;
@@ -3204,7 +3237,136 @@ namespace Zysoft.ZyExternal.DAL.His
             }
             return 0;
         }
+
+        /// <summary>
+        /// 瑞美lis 生成管子费用
+        /// </summary>
+        /// <param name="ndApplyItems"></param>
+        /// <param name="errorMsg"></param>
+        /// <returns></returns>
+        public int SendLisBeforeSettle(XmlNode ndApplyItems, out string outParm)
+        {
+            outParm = "";
+            StringBuilder sql = new StringBuilder();
+            bool canSendLis;
+            string applyNo, itemClass, executeDeptCode, costMode;
+            DateTime applyTime;
+            string itemCode, applyClassCode;
+            long visitNumber;
+            string lisCreateBarcodeDeptCode;
+            UtilityDAL utilityDAL = new UtilityDAL();
+            lisCreateBarcodeDeptCode = utilityDAL.GetSysParm("lis_create_barcode_dept_code");
+            try
+            {
+
+
+                DataTable dt = new DataTable();
+
+                dt.Columns.Add("apply_time", typeof(System.DateTime));
+                dt.Columns.Add("apply_no", typeof(System.String));
+                DataRow dr;
+
+                foreach (XmlNode ndApplyItem in ndApplyItems.SelectNodes("ApplyItem"))
+                {
+                    canSendLis = false;
+                    applyNo = ndApplyItem.SelectSingleNode("ApplyNo").InnerText;
+                    itemCode = ndApplyItem.SelectSingleNode("ApplyNo").InnerText;
+                    applyTime = (ndApplyItem.SelectSingleNode("AppleTime").InnerText.Substring(0, 8)).To<DateTime>();
+                    executeDeptCode = ndApplyItem.SelectSingleNode("ExecuteDeptCode").InnerText;
+                    costMode = ndApplyItem.SelectSingleNode("CostMode").InnerText;
+                    sql.Clear();
+                    sql.Append(@"select a.APPLY_CLASS_CODE apply_class_code, 
+                                    a.item_code item_code, 
+                                    a.visit_number visit_number
+  		                      from V_APPLY_SHEET_UNION a
+ 		                     where a.APPLY_NO = :arg_apply_no");
+                    OracleParameter[] parmApplySheet =
+                          {
+                            new OracleParameter("arg_apply_no",applyNo)
+                        };
+                    DataTable dtApplySheet = Select(sql.ToString(), parmApplySheet);
+                    if (dtApplySheet.Rows.Count == 0) continue;
+                    applyClassCode = dtApplySheet.Rows[0]["apply_class_code"].ToString();
+                    itemCode = dtApplySheet.Rows[0]["item_code"].ToString();
+                    visitNumber = long.Parse(dtApplySheet.Rows[0]["visit_number"].ToString());
+                    if (applyClassCode == "0041") continue;
+
+                    if (visitNumber > 0) continue; //只有门诊单据才发送
+                                                   //只有检验单据才发送
+                    sql.Clear();
+                    sql.Append(@"select  substr( item_class, 0,1) item_class, item_code from clinic_item_dict where item_code = '" + itemCode + "'");
+                    DataTable dtItemDict = Select(sql.ToString());
+                    if (dtItemDict.Rows.Count == 0) continue;
+                    itemClass = dtItemDict.Rows[0]["item_class"].ToString();
+                    if (itemClass != "D") continue;
+                    if (lisCreateBarcodeDeptCode.IsNull()) break;
+                    lisCreateBarcodeDeptCode = ";" + lisCreateBarcodeDeptCode + ";";
+                    if (executeDeptCode.IsNull()) executeDeptCode = "abc";
+                    if (lisCreateBarcodeDeptCode.IndexOf(executeDeptCode) >= 0)
+                    {
+                        canSendLis = true;
+                        break;
+                    }
+
+                    if (!canSendLis) continue;
+
+                    dr = dt.NewRow();
+                    dr["apply_time"] = applyTime;
+                    dr["apply_no"] = applyNo;
+                    dt.Rows.Add(dr);
+                }
+
+                DataView dv = dt.DefaultView;
+                dv.Sort = "apply_time";
+                DataTable dtCreateList = dv.ToTable();
+
+                SvrRmlisDal svrRmlisDal = new SvrRmlisDal(DBConnection, DBTransaction);
+                DateTime applyTimeOld = utilityDAL.GetSysDateTime();
+                List<string> applyNos = new List<string>();
+                int ireturn;
+                if (dtCreateList.Rows.Count > 0)
+                {
+                    for (int i = 0; i < dtCreateList.Rows.Count; i++)
+                    {
+                        applyTime = dtCreateList.Rows[i]["apply_time"].ToString().ToDateTime();
+                        applyNo = dtCreateList.Rows[i]["apply_no"].ToString();
+                        if (i == 0) applyTimeOld = applyTime;
+
+                        if (applyTimeOld != applyTime)
+                        {
+                            //不同天先将前面的单据生成条码
+                            ireturn = svrRmlisDal.ChargeTube(applyNos, out outParm);
+
+                            applyNos.Clear();
+                            applyTimeOld = applyTime;
+                            applyNos.Add(applyNo);
+                        }
+                        else
+                        {
+                            applyNos.Add(applyNo);
+                        }
+                    }
+                   
+                }
+                if (applyNos.Count > 0)
+                {
+                    ireturn = svrRmlisDal.ChargeTube(applyNos, out outParm);
+                }
+                else
+                {
+                    ireturn = 0;
+                }
+                return ireturn;
+            }
+            catch (Exception ex)
+            {
+                outParm = ex.Message;
+                Log4NetHelper.Error("瑞美lis 生成管子费用", ex);
+                return -1;
+            }
+        }
         #endregion
+
 
     }
 }

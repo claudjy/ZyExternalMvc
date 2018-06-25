@@ -98,6 +98,8 @@
     <Compile Include="Database\OleDBConnect.cs" />
     <Compile Include="Database\OracleConnect.cs" />
     <Compile Include="Database\ServiceBase.cs" />
+    <Compile Include="Database\SqlConnect.cs" />
+    <Compile Include="Database\SqlDB.cs" />
     <Compile Include="Encode\Base64.cs" />
     <Compile Include="Encode\CitizenHealthHelper.cs" />
     <Compile Include="Encode\DESHelper.cs" />

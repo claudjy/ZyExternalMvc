@@ -38,3 +38,4 @@ Zysoft.ZyExternalMvc\logs\log4net.txt
 /Zysoft.ZyExternalMvc/Support
 /Zysoft.ZyExternalMvc/logs
 *.lock
+/.vs/ZyExternalMvc/DesignTimeBuild/.dtbcache

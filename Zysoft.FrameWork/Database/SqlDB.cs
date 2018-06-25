@@ -1,19 +1,19 @@
-﻿﻿using System;
+﻿using System;
 using System.Data;
 using System.Text;
 using System.Configuration;
 using System.Collections.Generic;
-using System.Data.OracleClient;
+using System.Data.SqlClient;
 using System.Runtime.Remoting.Messaging;
 
 namespace Zysoft.FrameWork.Database
 {
-    public class DB : ServiceBase,IDB
+    public class SqlDB : ServiceBase, IDB
     {
         /// <summary>
         /// Oracle连接对象
         /// </summary>
-        public OracleConnection DBConnection
+        public SqlConnection DBConnection
         {
             get;
             set;
@@ -22,7 +22,7 @@ namespace Zysoft.FrameWork.Database
         /// <summary>
         /// Oracle事务
         /// </summary>
-        public OracleTransaction DBTransaction
+        public SqlTransaction DBTransaction
         {
             get;
             set;
@@ -35,12 +35,12 @@ namespace Zysoft.FrameWork.Database
         {
             get;
             set;
-        }     
+        }
 
         /// <summary>
         /// 
         /// </summary>
-        public DB()
+        public SqlDB()
         {
 
         }
@@ -53,7 +53,7 @@ namespace Zysoft.FrameWork.Database
         /// <returns></returns>
         public T Select<T>(string sql)
         {
-            OracleParameter[] parameters = { };
+            SqlParameter[] parameters = { };
             return Select<T>(sql, parameters);
         }
 
@@ -80,7 +80,7 @@ namespace Zysoft.FrameWork.Database
         /// <returns></returns>
         public T Select<T>(string sql, IDataParameter[] parameters, string checkNullTips)
         {
-            OracleCommand command = GetCommand();
+            SqlCommand command = GetCommand();
             command.CommandText = sql;
             if (parameters != null)
             {
@@ -100,7 +100,7 @@ namespace Zysoft.FrameWork.Database
                 command.Parameters.Clear();
                 command.Connection.Close();
             }
-            command.Dispose();            
+            command.Dispose();
 
             //空值检查（有传入空值提示信息nullTips时，才去检查）
             if (t == null && checkNullTips != string.Empty)
@@ -142,7 +142,7 @@ namespace Zysoft.FrameWork.Database
         {
             DataTable dtSelectTable = new DataTable();
 
-            OracleDataAdapter adapter = this.GetDataAdapter();
+            SqlDataAdapter adapter = this.GetDataAdapter();
             adapter.SelectCommand.CommandText = sql;
             if (parameters != null)
             {
@@ -164,7 +164,7 @@ namespace Zysoft.FrameWork.Database
                 }
                 throw new Exception(ex.Message + "\r\n【SQL】" + sql);
             }
-           
+
             if (tableName.Length > 0)
             {
                 dtSelectTable.TableName = tableName;
@@ -180,10 +180,10 @@ namespace Zysoft.FrameWork.Database
             }
             //
             adapter.SelectCommand.Dispose();
-            
+
             return dtSelectTable;
         }
-        
+
         /// <summary>
         /// SQL语法插入数据
         /// </summary>
@@ -237,23 +237,6 @@ namespace Zysoft.FrameWork.Database
         }
 
         /// <summary>
-        /// SQL语法更新数据
-        /// </summary>
-        /// <param name="sql">更新sql语句</param>
-        /// <param name="parameters">参数</param>
-        /// <param name="isUpdateOneRow">是否检查更新结果只更新一行</param>
-        /// <returns></returns>
-        public int Update(string sql, IDataParameter[] parameters, bool isUpdateOneRow, string errorMsg)
-        {
-            int row = Execute(sql, parameters);
-
-            if (isUpdateOneRow && row != 1)
-            {
-                throw new Exception(errorMsg);
-            }
-            return row;
-        }
-        /// <summary>
         /// SQL语法删除数据
         ///     (不检查删除结果)
         /// </summary>
@@ -281,7 +264,7 @@ namespace Zysoft.FrameWork.Database
             }
             return row;
         }
-        
+
         /// <summary>
         /// 执行存储过程
         /// </summary>
@@ -290,7 +273,7 @@ namespace Zysoft.FrameWork.Database
         /// <returns></returns>
         public int ExecuteStoredProcedure(string sql, IDataParameter[] parameters)
         {
-           return ExecuteStoredProcedure(sql, parameters, true);
+            return ExecuteStoredProcedure(sql, parameters, true);
         }
 
         /// <summary>
@@ -303,7 +286,7 @@ namespace Zysoft.FrameWork.Database
         /// <returns></returns>
         public int ExecuteStoredProcedure(string sql, IDataParameter[] parameters, bool IsCheckDBTransaction)
         {
-            OracleCommand command = GetCommand();
+            SqlCommand command = GetCommand();
             command.CommandText = sql;
             command.CommandType = CommandType.StoredProcedure;
             if (parameters != null)
@@ -336,20 +319,20 @@ namespace Zysoft.FrameWork.Database
         {
             //获取表架构
             string strSQL = "Select * from " + updateDataTable.TableName + " where 1<>1";
-            OracleDataAdapter adapter = this.GetDataAdapter();
+            SqlDataAdapter adapter = this.GetDataAdapter();
 
             //连接、事务统一外部传入，容错
             CheckDBTransInstantiate();
 
             adapter.SelectCommand.CommandText = strSQL;
-            adapter.UpdateCommand = new OracleCommandBuilder(adapter).GetUpdateCommand();
+            adapter.UpdateCommand = new SqlCommandBuilder(adapter).GetUpdateCommand();
             //
             adapter.Update(updateDataTable);
 
             //
             adapter.SelectCommand.Dispose();
             adapter.UpdateCommand.Dispose();
-            
+
 
             return 0;
         }
@@ -427,11 +410,11 @@ namespace Zysoft.FrameWork.Database
         /// 获取OracleCommand
         /// </summary>
         /// <returns></returns>
-        private OracleCommand GetCommand()
-        {            
+        private SqlCommand GetCommand()
+        {
             //更新数据(插入、删除、更新)
-            OracleCommand command = new OracleCommand();
-            
+            SqlCommand command = new SqlCommand();
+
             if (this.DBConnection != null && this.DBTransaction != null)
             {
                 command.Connection = DBConnection;
@@ -441,27 +424,27 @@ namespace Zysoft.FrameWork.Database
             {
                 //从上下文中试图取得连接和事务 
                 object obj = CallContext.GetData("ConnectionAOP");
-                if (obj != null && obj is OracleConnection)
+                if (obj != null && obj is SqlConnection)
                 {
                     //当连接字符串与上下文中的不一致时(可能连其它库),须重连
-                    if (!string.IsNullOrEmpty(this.ConnectString) && this.ConnectString != (obj as OracleConnection).ConnectionString)
+                    if (!string.IsNullOrEmpty(this.ConnectString) && this.ConnectString != (obj as SqlConnection).ConnectionString)
                     {
                     }
                     else
                     {
                         //2012-3-12.hjb.分步事务处理时(例如：先创建日志提交后，再处理其它)，
                         //              开始时上下文已传递连接和事务对象，处理完连接已经关闭，后面处理需要重新创建连接
-                        DBConnection = obj as OracleConnection;
+                        DBConnection = obj as SqlConnection;
                         if (DBConnection.State == ConnectionState.Closed)
                         {
                             DBConnection = null;
                         }
                         else
-                        {        
+                        {
                             obj = CallContext.GetData("TransactionAOP");
-                            if (obj != null && obj is OracleTransaction)
+                            if (obj != null && obj is SqlTransaction)
                             {
-                                DBTransaction = obj as OracleTransaction;
+                                DBTransaction = obj as SqlTransaction;
                             }
                         }
                     }
@@ -470,14 +453,14 @@ namespace Zysoft.FrameWork.Database
                 //连接数据库
                 if (DBConnection == null || DBTransaction == null)
                 {
-                    OracleConnection con = null;
+                    SqlConnection con = null;
                     if (string.IsNullOrEmpty(this.ConnectString))
                     {
-                        con = OracleConnect.Connect();
+                        con = SqlConnect.Connect();
                     }
                     else
                     {
-                        con = OracleConnect.CustomConnect(ConnectString);
+                        con = SqlConnect.CustomConnect(ConnectString);
                     }
                     if (con.State != ConnectionState.Open)
                     {
@@ -499,9 +482,9 @@ namespace Zysoft.FrameWork.Database
         /// 获取OracleDataAdapter
         /// </summary>
         /// <returns></returns>
-        private OracleDataAdapter GetDataAdapter()
+        private SqlDataAdapter GetDataAdapter()
         {
-            return new OracleDataAdapter(this.GetCommand());
+            return new SqlDataAdapter(this.GetCommand());
         }
 
         /// <summary>
@@ -512,19 +495,20 @@ namespace Zysoft.FrameWork.Database
         /// <returns></returns>
         private int Execute(string sql, IDataParameter[] parameters)
         {
-            OracleCommand command = GetCommand();
+            SqlCommand command = GetCommand();
             command.CommandText = sql;
             if (parameters != null)
             {
                 command.Parameters.AddRange(parameters);
             }
+
             //连接、事务统一外部传入，容错
             CheckDBTransInstantiate();
 
             int row = command.ExecuteNonQuery();
             //
             command.Dispose();
- 
+
 
             return row;
         }
@@ -550,10 +534,10 @@ namespace Zysoft.FrameWork.Database
             {
                 throw new Exception("连接失败，请先配置数据库连接字符串！");
             }
-                        
-            this.DBConnection = new OracleConnection(this.ConnectString);
+
+            this.DBConnection = new SqlConnection(this.ConnectString);
             this.DBConnection.Open();
-            this.DBTransaction = this.DBConnection.BeginTransaction();            
+            this.DBTransaction = this.DBConnection.BeginTransaction();
         }
 
         /// <summary>

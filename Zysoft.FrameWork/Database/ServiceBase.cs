@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Data.OracleClient;
+using System.Data.SqlClient;
 using System.Data.OleDb;
 using System.Runtime.Remoting.Messaging;
 
@@ -35,6 +36,17 @@ namespace Zysoft.FrameWork.Database
             CallContext.SetData("ConnectionAOP", dbConnection);
             CallContext.SetData("TransactionAOP", dbTransaction);
         }
-        
+
+
+        public void CreateSqlDBTransaction(SqlConnection dbConnection, SqlTransaction dbTransaction)
+        {
+            if (dbConnection.State != System.Data.ConnectionState.Open)
+            {
+                dbConnection.Open();
+            }
+            CallContext.SetData("SQLConnectionAOP", dbConnection);
+            CallContext.SetData("SQLTransactionAOP", dbTransaction);
+        }
+
     }
 }
