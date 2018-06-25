@@ -3221,7 +3221,7 @@ namespace Zysoft.ZyExternal.DAL.His
                 if (resultCode != "0000")
                 {
                     outParm = resultMessage;
-                    return -1;
+                    return -1; 
                 }
                 preHisTradeNo = ndResponse.SelectSingleNode("HISTradeNo").InnerText;
                 //orderCode = ndResponse.SelectSingleNode("OrderCode").InnerText;
