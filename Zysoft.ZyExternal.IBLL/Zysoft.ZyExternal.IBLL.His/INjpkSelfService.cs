@@ -143,6 +143,7 @@ namespace Zysoft.ZyExternal.IBLL.His
         /// <param name="docRequestPre"></param>
         /// <param name="outParm"></param>
         /// <returns></returns>
+        [Log(Introduction = "012 获取划价单明细接口", Order = 1)]
         int GetPreNosDetailInfo(XmlDocument docRequestPre, out string outParm);
         #endregion
 

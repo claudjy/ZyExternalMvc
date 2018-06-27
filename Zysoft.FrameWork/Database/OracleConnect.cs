@@ -5,6 +5,33 @@ using Zysoft.FrameWork.Encode;
 
 namespace Zysoft.FrameWork.Database
 {
+    /// <summary>
+    /// Add by Sugar at 2012.3.14
+    /// 策略类型
+    /// </summary>
+    public static class DBConnectArgument
+    {
+        /// <summary>
+        /// 数据库
+        /// </summary>
+        public static string datasource;
+
+        /// <summary>
+        /// 用户
+        /// </summary>
+        public static string user;
+
+        /// <summary>
+        /// 密码
+        /// </summary>
+        public static string password;
+
+        /// <summary>
+        /// 分院标志
+        /// </summary>
+        public static string partFlag;
+
+    }
     public class OracleConnect
     {
         public static OracleConnection Connect()

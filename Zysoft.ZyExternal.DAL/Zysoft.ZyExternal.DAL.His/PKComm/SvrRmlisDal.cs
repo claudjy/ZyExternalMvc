@@ -42,7 +42,7 @@ namespace Zysoft.ZyExternal.DAL.His
                 string itemClass;
                 int visitNumber;
                 string itemid;
-                long qty;
+                decimal qty;
                 string reqitemCode;
                 string temp;
                 string reqGroupID;
@@ -95,7 +95,7 @@ namespace Zysoft.ZyExternal.DAL.His
                     applyClassCode = dtApplySheet.Rows[0]["apply_class_code"].ToString();
                     temp = dtApplySheet.Rows[0]["item_code"].ToString();
                     itemClass = dtApplySheet.Rows[0]["item_class"].ToString();
-                    visitNumber = int.Parse(dtApplySheet.Rows[0]["item_class"].ToString());
+                    visitNumber = int.Parse(dtApplySheet.Rows[0]["visit_number"].ToString());
                     sickId = dtApplySheet.Rows[0]["sick_id"].ToString();
                     residenceNo = dtApplySheet.Rows[0]["residence_no"].ToString();
                     applyDoctor = dtApplySheet.Rows[0]["apply_doctor"].ToString();
@@ -137,7 +137,6 @@ namespace Zysoft.ZyExternal.DAL.His
                 sql.Clear();
                 sql.Append(@"
                 select f.name sick_name,f_get_age(f.sick_id) age,f.sex sex
-                 into  :ls_sick_name,:ls_age,:ls_sex
                  from sick_basic_info f
                 where f.sick_id = :arg_sick_id");
                 OracleParameter[] paraSickBase = { new OracleParameter("arg_sick_id",sickId)
@@ -219,7 +218,7 @@ namespace Zysoft.ZyExternal.DAL.His
 
                     if (dtChargeRuleDetail.Rows.Count == 0) continue;
                     itemid = dtChargeRuleDetail.Rows[0]["itemid"].ToString();
-                    qty = long.Parse(dtChargeRuleDetail.Rows[0]["qty"].ToString());
+                    qty = decimal.Parse(dtChargeRuleDetail.Rows[0]["qty"].ToString());
 
 
                     sql.Clear();
@@ -297,6 +296,7 @@ namespace Zysoft.ZyExternal.DAL.His
                                                         new OracleParameter("ls_residence_no",residenceNo),
                                                         new OracleParameter("ls_sick_name",sickName),
                                                         new OracleParameter("ls_sex",sex),
+                                                        new OracleParameter("ls_age",age),
                                                         new OracleParameter("ls_exec_dept",execDept),
                                                         new OracleParameter("ls_reqitemcode",reqitemCode),
                                                         new OracleParameter("ls_charge_name",chargeName),
@@ -344,8 +344,9 @@ namespace Zysoft.ZyExternal.DAL.His
                 }
                 return 2;
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
+                Log4NetHelper.Error("生成试管费用 ", ex);
                 return -1;
             }
         }

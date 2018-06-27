@@ -41,7 +41,7 @@ namespace Zysoft.ZyExternal.DAL.His
                 insure_out_paramm6 = insure_out_paramm7 = insure_out_paramm8 = insure_out_paramm9 = insure_out_paramm10 = "";
                 insure_out_paramm11 = insure_out_paramm12 = insure_out_paramm13 = insure_out_paramm14 = insure_out_paramm15 = "";
                 insure_out_paramm16 = insure_out_paramm17 = insure_out_paramm18 = insure_out_paramm19 = insure_out_paramm20 = "";
-
+                Log4NetHelper.Info("插入医保日志中间表执行！！");
                 string[] settleList1 = tradeText.Split('^');
                 if (settleList1.Length >= 2)
                 {
@@ -210,6 +210,7 @@ namespace Zysoft.ZyExternal.DAL.His
                 string[] settleList = settleList1[7].Split('|');
                 insurApplyNo = settleList[1];
             }
+            Log4NetHelper.Info("插入医保日志中间表继续！！");
             return CreateSettleInfo(insurApplyNo, settleOutParm, sickId, insuranceNo, registerType, residenceNo, icdCode, safetyNo, RateType, LostCash);
         }
 

@@ -1075,7 +1075,6 @@ namespace Zysoft.ZyExternal.DAL.His
                 }
                 //end =========================================================
                 #endregion
-
                 if (GetPatientVisitInfo2090(visitNo, empNameNo, out visitData, out errorMsg) < 0)
                 {
                     elerspCode.InnerText = "0";
@@ -1098,7 +1097,7 @@ namespace Zysoft.ZyExternal.DAL.His
                 safetyNo = insuranceCardNo = returnText = "0";
                 businessNo = insurApplyNo = "0";
 
-                string bankTradeNo, tradeText;
+                string bankTradeNo, tradeText, registerInparm;
                 string inBankTraceDate, inBankTraceTime;
                 money = ndReqRoot.SelectSingleNode("inCashPay").InnerText;
                 cost = ndReqRoot.SelectSingleNode("inJeAll").InnerText;
@@ -1109,6 +1108,7 @@ namespace Zysoft.ZyExternal.DAL.His
 
                 tradeText = ndReqRoot.SelectSingleNode("siInParam").InnerText;
                 returnText = ndReqRoot.SelectSingleNode("siOutParam").InnerText;
+                registerInparm = ndReqRoot.SelectSingleNode("siDjParam").InnerText;
 
                 charges = money;
 
@@ -1180,7 +1180,7 @@ namespace Zysoft.ZyExternal.DAL.His
 
                     string[] regList = inList1[7].Split('|');
                     insuranceNo = regList[0];
-                    safetyNo = regList[10];
+                    safetyNo = regList[13];
                     insuranceCardNo = safetyNo;
                 }
 
@@ -1248,6 +1248,17 @@ namespace Zysoft.ZyExternal.DAL.His
                 elerspMsg.InnerText = resultMessage;
 
                 outParm = docResponseRoot.OuterXml;
+
+                if (rateType == "F")
+                {
+                    BankTradeLogDal bankTradeLogDal = new BankTradeLogDal();
+                    decimal lostCash = 0;
+                    lostCash = decimal.Parse(cost) - (decimal.Parse(charges) + decimal.Parse(insurFund) +
+                     decimal.Parse(insurAccountCharges) + decimal.Parse(insurHospCharges) +
+                     decimal.Parse(insurSafe) + decimal.Parse(insurOfficialCharges));
+                    Log4NetHelper.Info("插入医保日志中间表开始！！");
+                    bankTradeLogDal.CreateSettleInfo(registerInparm, tradeText, returnText, patientID, visitNo, rateType, lostCash);
+                }
             }
             catch (Exception ex)
             {
@@ -2352,7 +2363,7 @@ namespace Zysoft.ZyExternal.DAL.His
                 ndResRoot.AppendChild(eleItems);
 
                 string residenceNo, sickId, sickName, idCardNo, admitDate;
-                string applyDept;
+                string applyDept, applyDeptName;
                 string diagnosisName, doctor;
                 string preNo, djh;
 
@@ -2377,7 +2388,7 @@ namespace Zysoft.ZyExternal.DAL.His
                     idCardNo = ""; // ndVisitInfo.SelectSingleNode("IDCardNo").InnerText;
                     admitDate = ndVisitInfo.SelectSingleNode("AdmitDate").InnerText;
                     applyDept = ndVisitInfo.SelectSingleNode("ApplyDept").InnerText;
-                    applyDept = ndVisitInfo.SelectSingleNode("ApplyDept").InnerText;
+                    applyDeptName = ndVisitInfo.SelectSingleNode("ApplyDeptName").InnerText;
                     diagnosisCode = ndVisitInfo.SelectSingleNode("DiagnosisCode").InnerText;
                     diagnosisName = ndVisitInfo.SelectSingleNode("DiagnosisName").InnerText;
                     visitData = ndVisitInfo.SelectSingleNode("VisitData").InnerText;
@@ -2447,7 +2458,7 @@ namespace Zysoft.ZyExternal.DAL.His
                         return -1;
                     }
 
-                    string applyNo;
+                    string applyNo = "", ybchf = "001";
                     foreach (XmlNode ndSequenceNo in ndSequenceNos.SelectNodes("SequenceNo"))
                     {
                         applyNo = ndSequenceNo.Attributes["ApplyNo"].Value;
@@ -2456,6 +2467,7 @@ namespace Zysoft.ZyExternal.DAL.His
                             djh += applyNo + ",";
                         }
                         sequenceNos += ndSequenceNo.InnerText + ",";
+                        ybchf = ndSequenceNo.InnerText;
                     }
                     XmlElement eleItem = docResponseRoot.CreateElement("item");
 
@@ -2491,7 +2503,7 @@ namespace Zysoft.ZyExternal.DAL.His
                     XmlElement eleicd10 = docResponseRoot.CreateElement("icd10");
                     XmlElement eleNhJbmc = docResponseRoot.CreateElement("jbmc");
 
-                    elepreNo.InnerText = djh;
+                    elepreNo.InnerText = applyNo;// djh;
                     eleregisterFlow.InnerText = residenceNo;
                     elepatientId.InnerText = sickId;
                     elepatientName.InnerText = sickName;
@@ -2500,13 +2512,13 @@ namespace Zysoft.ZyExternal.DAL.His
                     eleidenNo.InnerText = idCardNo;
                     eleclinicDate.InnerText = admitDate;
                     eledepartmentId.InnerText = applyDept;
-                    eleDepartmentName.InnerText = "";
+                    eleDepartmentName.InnerText = applyDeptName;
                     eleexpertId.InnerText = doctor;
-                    eleExpertName.InnerText = "";
+                    eleExpertName.InnerText = doctor.Substring(0, doctor.IndexOf('/'));
                     eleDiagnoseName.InnerText = diagnosisName;
                     eleTotalFee.InnerText = preCost.ToString();
                     elepaymentStatus.InnerText = "1";
-                    eleybcfh.InnerText = sequenceNos;
+                    eleybcfh.InnerText = ybchf;
                     eleybksbm.InnerText = applyDept;
                     eleksbm.InnerText = applyDept;
                     eleybysbm.InnerText = doctor;
@@ -2672,7 +2684,18 @@ namespace Zysoft.ZyExternal.DAL.His
             ndResRoot.AppendChild(elerspMsg);
 
             sequenceNos = ndReqRoot.SelectSingleNode("ybcfh").InnerText;
-            sql.Clear();
+
+            string sequenceNoJson;
+            sequenceNoJson = ndReqRoot.SelectSingleNode("SequenceNos").InnerText;           
+            XmlDocument docXml = JsonConvert.DeserializeXmlNode(sequenceNoJson);
+            XmlNodeList ndSequenceNos = docXml.SelectNodes("SequenceNos/SequenceNo");
+            sequenceNos = "";
+            foreach (XmlNode ndSequenceNo in ndSequenceNos)
+            {
+                sequenceNos += ndSequenceNo.InnerText + ",";
+            }
+
+                sql.Clear();
             sql.Append(@"
                 select s.sequence_no preNo,
                        decode(upper(substr(s.item_class, 1, 1)),
@@ -2763,8 +2786,7 @@ namespace Zysoft.ZyExternal.DAL.His
                              where d.icd10_code = 'Z00.001'
                                and d.city_insurance_code is not null
                                and rownum = 1),
-                            'Z00.001')) bzbm,
-                       s.*
+                            'Z00.001')) bzbm
 
                   from dispensary_sick_price_item s,
                        dispensary_sick_cure_info  t,
@@ -2781,7 +2803,7 @@ namespace Zysoft.ZyExternal.DAL.His
             dsPriceItems.Tables.Add(dtPriceItem);
             string priceItemsXml = dsPriceItems.GetXml();
             priceItemsXml = priceItemsXml.Replace("PRENO", "preNo");
-            priceItemsXml = priceItemsXml.Replace("ITEMCLASS", "itemClass");
+            priceItemsXml = priceItemsXml.Replace("ITEM_CLASS", "itemClass");
             priceItemsXml = priceItemsXml.Replace("ITEMNAME", "itemName");
             priceItemsXml = priceItemsXml.Replace("ITEMCODE", "itemCode");
             priceItemsXml = priceItemsXml.Replace("ITEMSPEC", "itemSpec");
@@ -2927,7 +2949,7 @@ namespace Zysoft.ZyExternal.DAL.His
 
                             string[] regList = inList1[7].Split('|');
                             insuranceNo = regList[0];
-                            safetyNo = regList[10];
+                            safetyNo = regList[13];
                             insuranceCardNo = safetyNo;
                         }
 
@@ -2969,6 +2991,7 @@ namespace Zysoft.ZyExternal.DAL.His
                     lostCash = decimal.Parse(preCharge) - (decimal.Parse(charges) + decimal.Parse(insurFund) +
                      decimal.Parse(insurAccountCharges) + decimal.Parse(insurHospCharges) +
                      decimal.Parse(insurSafe) + decimal.Parse(insurOfficialCharges));
+                     Log4NetHelper.Info("插入医保日志中间表开始！！");
                     bankTradeLogDal.CreateSettleInfo(registerInparm, tradeText, returnText, patientID, visitNo, rateType, lostCash);
                 }
 
@@ -3265,13 +3288,15 @@ namespace Zysoft.ZyExternal.DAL.His
                 dt.Columns.Add("apply_time", typeof(System.DateTime));
                 dt.Columns.Add("apply_no", typeof(System.String));
                 DataRow dr;
+                string expectedFormats = "yyyyMMddHHmmss";
 
                 foreach (XmlNode ndApplyItem in ndApplyItems.SelectNodes("ApplyItem"))
                 {
                     canSendLis = false;
                     applyNo = ndApplyItem.SelectSingleNode("ApplyNo").InnerText;
-                    itemCode = ndApplyItem.SelectSingleNode("ApplyNo").InnerText;
-                    applyTime = (ndApplyItem.SelectSingleNode("AppleTime").InnerText.Substring(0, 8)).To<DateTime>();
+                    itemCode = ndApplyItem.SelectSingleNode("ItemCost").InnerText;
+                    applyTime = DateTime.ParseExact((ndApplyItem.SelectSingleNode("AppleTime").InnerText), expectedFormats, System.Globalization.CultureInfo.InvariantCulture);
+
                     executeDeptCode = ndApplyItem.SelectSingleNode("ExecuteDeptCode").InnerText;
                     costMode = ndApplyItem.SelectSingleNode("CostMode").InnerText;
                     sql.Clear();
@@ -3305,7 +3330,6 @@ namespace Zysoft.ZyExternal.DAL.His
                     if (lisCreateBarcodeDeptCode.IndexOf(executeDeptCode) >= 0)
                     {
                         canSendLis = true;
-                        break;
                     }
 
                     if (!canSendLis) continue;
@@ -3321,14 +3345,14 @@ namespace Zysoft.ZyExternal.DAL.His
                 DataTable dtCreateList = dv.ToTable();
 
                 SvrRmlisDal svrRmlisDal = new SvrRmlisDal(DBConnection, DBTransaction);
-                DateTime applyTimeOld = utilityDAL.GetSysDateTime();
+                DateTime applyTimeOld = utilityDAL.GetSysDateTime().Date;
                 List<string> applyNos = new List<string>();
                 int ireturn;
                 if (dtCreateList.Rows.Count > 0)
                 {
                     for (int i = 0; i < dtCreateList.Rows.Count; i++)
                     {
-                        applyTime = dtCreateList.Rows[i]["apply_time"].ToString().ToDateTime();
+                        applyTime = dtCreateList.Rows[i]["apply_time"].ToString().ToDateTime().Date;
                         applyNo = dtCreateList.Rows[i]["apply_no"].ToString();
                         if (i == 0) applyTimeOld = applyTime;
 
