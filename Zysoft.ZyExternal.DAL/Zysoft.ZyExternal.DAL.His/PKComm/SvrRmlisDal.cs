@@ -7,6 +7,7 @@ using Zysoft.FrameWork;
 using System.Data;
 using System.Data.OracleClient;
 using Zysoft.ZyExternal.DAL.Common;
+using System.Web.Configuration;
 
 namespace Zysoft.ZyExternal.DAL.His
 {
@@ -42,8 +43,8 @@ namespace Zysoft.ZyExternal.DAL.His
                 string itemClass;
                 int visitNumber;
                 string itemid;
-                decimal qty;
-                string reqitemCode;
+                decimal qty =0;
+                string reqitemCode="";
                 string temp;
                 string reqGroupID;
                 string applyClassCode;
@@ -56,8 +57,8 @@ namespace Zysoft.ZyExternal.DAL.His
                 string sickName;   //病人姓名
                 string sex;//性别
                 string execDept;   //执行科室
-                string chargeName; //收费项目名称
-                decimal charge;//价格
+                string chargeName =""; //收费项目名称
+                decimal charge =0;//价格
                 string patientDept = "";  //病人所在科室
                 List<string> applyNoReals = new List<string>();
                 string applyDoctor = "";  //申请医生
@@ -110,10 +111,10 @@ namespace Zysoft.ZyExternal.DAL.His
                     //判断是否已经生成过试管费
                     sql.Clear();
                     sql.Append(@"
-                select 1
-                  from custom.lis_requestion_tube_temp
-                 where apply_no = :arg_apply_no
-                   and valid_flag = 'Y'");
+                        select 1
+                          from custom.lis_requestion_tube_temp
+                         where apply_no = :arg_apply_no
+                           and valid_flag = 'Y'");
                     OracleParameter[] parmRequestionTube =
                         {
                         new OracleParameter("arg_apply_no",applyNo)
@@ -223,7 +224,7 @@ namespace Zysoft.ZyExternal.DAL.His
 
                     sql.Clear();
                     sql.Append(@"
-                select req_itemcode reqitemcode
+                  select req_itemcode reqitemcode
                     from REQ_ITEM_DICT where req_itemid = '" + itemid + "'");
                     DataTable dtReqItemCode = svrRmlis.GetDataTable(sql);
                     if (dtReqItemCode == null)
@@ -254,6 +255,7 @@ namespace Zysoft.ZyExternal.DAL.His
                     }
 
                     recordNo = utilityDal.GetSequenceNO("zhiydba.lis_requestion_id").ToString();
+                    //utilityDal.GetSequenceNO("");
                     if (applyDoctor.IsNull()) applyDoctor = "system";
 
                     sql.Clear();
@@ -306,6 +308,8 @@ namespace Zysoft.ZyExternal.DAL.His
                                                         new OracleParameter("ls_patient_dept",patientDept)
                                                 };
                     Insert(sql.ToString(), paraInsRequestion);
+                    //LisRequisitionCharge(sickId, reqitemCode, recordNo, qty, charge, "0", execDept,
+                    //                       "", applyDoctor, "0", patientDept, sickName, residenceNo);
                 }
                 if (dtReqItemDict.Rows.Count > 0)
                 {
@@ -342,6 +346,9 @@ namespace Zysoft.ZyExternal.DAL.His
                 {
                     return 0;
                 }
+                
+              
+
                 return 2;
             }
             catch (Exception ex)
@@ -350,6 +357,108 @@ namespace Zysoft.ZyExternal.DAL.His
                 return -1;
             }
         }
+        #endregion
+
+        #region 调用HIS存储生成试管费
+        public int LisRequisitionCharge(string sickID, string itemCode, string requistionId,
+             decimal chargeNum, decimal charge, string ioFlag,string execDept,
+             string execPerson, string chargePerson, string chargeState,
+             string patientDept, string sickName, string visitNo)
+        {
+            string procName;
+            procName = "P_LIS_REQUISITION_CHARGE";
+            //定义OracleCommand对象,设置命令类型为存储过程 
+            OracleCommand lisRequisitionCharge = new OracleCommand(procName, DBConnection, DBTransaction);//Oracle里面的（包.存储过程）
+            lisRequisitionCharge.CommandType = CommandType.StoredProcedure;
+            
+            //根据存储过程的参数个数及类型生成参数对象 
+            OracleParameter p1 = new OracleParameter("LS_SICK_ID", OracleType.VarChar);
+            OracleParameter p2 = new OracleParameter("AS_ITEM_CODE", OracleType.VarChar);
+            OracleParameter p3 = new OracleParameter("LS_requistion_id", OracleType.VarChar);
+            OracleParameter p4 = new OracleParameter("AS_charge_num", OracleType.Float);
+            OracleParameter p5 = new OracleParameter("AS_CHARGE", OracleType.Float);
+            OracleParameter p6 = new OracleParameter("LS_IO_FLAG", OracleType.VarChar);
+            OracleParameter p7 = new OracleParameter("LS_EXEC_DEPT", OracleType.VarChar);
+            OracleParameter p8 = new OracleParameter("ls_EXEC_PERSON", OracleType.VarChar);
+            OracleParameter p9 = new OracleParameter("LS_CHARGE_PERSON", OracleType.VarChar);
+            OracleParameter p10 = new OracleParameter("LS_charge_state", OracleType.VarChar);
+            OracleParameter p11 = new OracleParameter("LS_PATIENT_DEPT", OracleType.VarChar);
+            OracleParameter p12 = new OracleParameter("ls_SICK_NAME", OracleType.VarChar);
+            OracleParameter p13 = new OracleParameter("as_residence_no", OracleType.VarChar);
+
+            //设置参数的输入输出类型,默认为输入 
+            p1.Direction = ParameterDirection.Input;
+            p2.Direction = ParameterDirection.Input;
+            p3.Direction = ParameterDirection.Input;
+            p4.Direction = ParameterDirection.Input;
+            p5.Direction = ParameterDirection.Input;
+            p6.Direction = ParameterDirection.Input;
+            p7.Direction = ParameterDirection.Input;
+            p8.Direction = ParameterDirection.Input;
+            p9.Direction = ParameterDirection.Input;
+            p10.Direction = ParameterDirection.Input;
+            p11.Direction = ParameterDirection.Input;
+            p12.Direction = ParameterDirection.Input;
+            p13.Direction = ParameterDirection.Input;
+
+            //对输入参数定义初值,输出参数不必赋值.
+            p1.Value = sickID;
+            p2.Value = itemCode;
+            p3.Value = requistionId;
+            p4.Value = chargeNum;
+            p5.Value = charge;
+            p6.Value = ioFlag;
+            p7.Value = execDept;
+            p8.Value = execPerson;
+            p9.Value = chargePerson;
+            p10.Value = chargeState;
+            p11.Value = patientDept;
+            p12.Value = sickName;
+            p13.Value = visitNo;
+
+            //按照存储过程参数顺序把参数依次加入到OracleCommand对象参数集合中 
+            lisRequisitionCharge.Parameters.Clear();
+            lisRequisitionCharge.Parameters.Add(p1);
+            lisRequisitionCharge.Parameters.Add(p2);
+            lisRequisitionCharge.Parameters.Add(p3);
+            lisRequisitionCharge.Parameters.Add(p4);
+            lisRequisitionCharge.Parameters.Add(p5);
+            lisRequisitionCharge.Parameters.Add(p6);
+            lisRequisitionCharge.Parameters.Add(p7);
+            lisRequisitionCharge.Parameters.Add(p8);
+            lisRequisitionCharge.Parameters.Add(p9);
+            lisRequisitionCharge.Parameters.Add(p10);
+            lisRequisitionCharge.Parameters.Add(p11);
+            lisRequisitionCharge.Parameters.Add(p12);
+            lisRequisitionCharge.Parameters.Add(p13);
+
+            //OracleParameter p14 = new OracleParameter("result", OracleType.Int32, 100);
+            //p14.Direction = System.Data.ParameterDirection.ReturnValue;
+            //cmdCardCreate.Parameters.Add(p14);
+
+
+            try
+            {
+                int ireturn;
+                ireturn = lisRequisitionCharge.ExecuteNonQuery();
+                if (ireturn < 0)
+                {
+                    //errorMsg = "生成单据出错！";
+                    return -1;
+                }
+                
+            }
+            catch (Exception ex)
+            {
+                //errorMsg = ex.Message;
+                throw ex;
+            }
+
+
+
+            return 0;
+        }
+
         #endregion
     }
 }

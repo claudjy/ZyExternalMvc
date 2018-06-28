@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data.OracleClient;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
 using Zysoft.FrameWork.Database;
@@ -369,7 +370,9 @@ namespace Zysoft.ZyExternal.BLL.His
 
         public int GetPreNosDetailInfo(XmlDocument docRequestPre, out string outParm)
         {
-            outParm = "";
+            
+            outParm = "";            
+
             try
             {
                 using (OracleConnection dbCon = OracleConnect.Connect())
@@ -401,6 +404,7 @@ namespace Zysoft.ZyExternal.BLL.His
             }
             return 0;
         }
+
 
         #region 013 单张划价单缴费
         /// <summary>

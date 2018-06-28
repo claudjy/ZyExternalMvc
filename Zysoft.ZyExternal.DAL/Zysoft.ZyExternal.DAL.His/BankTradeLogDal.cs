@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Zysoft.FrameWork;
 using Zysoft.FrameWork.Database;
+using Zysoft.ZyExternal.DAL.Common;
 
 namespace Zysoft.ZyExternal.DAL.His
 {
@@ -20,7 +21,8 @@ namespace Zysoft.ZyExternal.DAL.His
         }
         
         public int CreateSettleInfo(string insurApplyNo, string tradeText, string sickId, string insuranceNo,
-            string registerType, string residenceNo, string icdCode, string safetyNO, string RateType, decimal LostCash)
+            string registerType, string residenceNo, string icdCode, string safetyNO, string RateType,
+            decimal LostCash, string settleNo)
         {
             
                 using (OracleConnection con = OracleConnect.Connect())
@@ -105,7 +107,8 @@ namespace Zysoft.ZyExternal.DAL.His
 			                                          icd_code,
 			                                          insurance_card_no,
 			                                          rate_type,
-			                                          lost_cash)
+			                                          lost_cash,
+                                                      settle_no)
                                             values(
 			                                          :ls_insur_apply_no  							/*医保单据号*/,
 			                                          :ls_insure_out_paramm1						/*本次医疗费总额*/,
@@ -140,7 +143,8 @@ namespace Zysoft.ZyExternal.DAL.His
 			                                          :ls_icd_code									    /*病种编码*/,
 			                                          :ls_insurance_card_no			                /*医保卡号*/,
 			                                          :ls_rate_type					                /*HIS费别*/,
-			                                          :ls_lost_cash								    /*HIS总费用与医保总费用结算尾差*/)
+			                                          :ls_lost_cash								    /*HIS总费用与医保总费用结算尾差*/,
+                                                      :arg_settle_no)
                                         ";
                         OracleParameter[] parameters = {
                                         new OracleParameter("ls_insur_apply_no", insurApplyNo),
@@ -172,7 +176,8 @@ namespace Zysoft.ZyExternal.DAL.His
                                         new OracleParameter("ls_icd_code", icdCode),
                                         new OracleParameter("ls_insurance_card_no", safetyNO),
                                         new OracleParameter("ls_rate_type", RateType),
-                                        new OracleParameter("ls_lost_cash", LostCash)
+                                        new OracleParameter("ls_lost_cash", LostCash),
+                                        new OracleParameter("arg_settle_no", settleNo)
             };
 
                         orcCmd.Parameters.AddRange(parameters);
@@ -190,7 +195,7 @@ namespace Zysoft.ZyExternal.DAL.His
                 }
         }
         public int CreateSettleInfo(string registerInparm, string settleInParm, string settleOutParm, string sickId,
-                    string residenceNo, string RateType, decimal LostCash)
+                    string residenceNo, string RateType, decimal LostCash, string settleNo)
         {
             string insuranceNo,insurApplyNo,registerType, icdCode, safetyNo, insuranceCardNo;
             insuranceNo=insurApplyNo=registerType=icdCode=safetyNo=insuranceCardNo="";
@@ -211,8 +216,178 @@ namespace Zysoft.ZyExternal.DAL.His
                 insurApplyNo = settleList[1];
             }
             Log4NetHelper.Info("插入医保日志中间表继续！！");
-            return CreateSettleInfo(insurApplyNo, settleOutParm, sickId, insuranceNo, registerType, residenceNo, icdCode, safetyNo, RateType, LostCash);
+            return CreateSettleInfo(insurApplyNo, settleOutParm, sickId, insuranceNo, registerType, 
+                residenceNo, icdCode, safetyNo, RateType, LostCash, settleNo);
         }
+
+        #region 生成交易日志
+        public int CreateInsurTradeLog(string sickId, string residenceNo, string operater, string returnText,
+            string deptCode, string insuranceNo, string safetyNo, string insuranceCardNo,
+            string rateType, string registType,
+            out string errorMsg, string tradeType, string businessNo = "",
+            string hisSettleFlag = "", string settleNo = "", string insuranceBillNumber = "",
+            string tradeText = ""
+            )
+        {
+            string tradeNo;
+            errorMsg = "";
+            StringBuilder sql = new StringBuilder();
+            UtilityDAL utilityDAL = new UtilityDAL();
+            string balanceInterface;
+            sql.Clear();
+            sql.Append(@"select balance_interface from rate_type_dict where rate_type_code = '" + rateType + "'");
+            DataTable dtRateType = Select(sql.ToString());
+            if (dtRateType.Rows.Count == 0)
+            {
+                errorMsg = "所录入费别不在字典中， 请重新录入";
+                return -1;
+            }
+            balanceInterface = dtRateType.Rows[0]["balance_interface"].ToString();
+
+            tradeNo = utilityDAL.GetSequenceNO("comm.insur_trade_seq").ToString();
+
+            sql.Clear();
+            sql.Append(@"
+                        insert into insur_trade_log
+                        (
+                            trade_no,
+                            residence_no,
+                            sick_id,
+                            trade_text,
+                            trade_type,
+                            settle_mode,
+                            operator,
+                            operation_date,
+                            status,
+                            business_cycle_no,
+                            balance_interface,
+                            return_text,
+                            return_date, 
+                            regist_type,
+                            insurance_no,
+                            safety_no,
+                            dept_code,
+                            insurance_card_no,
+                            settle_no,
+                            his_settle_flag,
+                            insurance_bill_number
+                        )
+                        values
+                        (
+                            :arg_trade_no,
+                            :arg_residence_no,
+                            :arg_sick_id,
+                            :arg_trade_text,
+                            :arg_trade_type,
+                            :arg_settle_mode,
+                            :arg_operator,
+                            sysdate,
+                            '2'/*完成*/,
+                            :arg_business_no,
+                            :arg_balance_interface/*医保接口类型*/,
+                            :arg_return_text,
+                            sysdate,
+                            :arg_regist_type,
+                            :arg_insurance_no,
+                            :arg_safety_no,
+                            :arg_dept_code,
+                            :arg_insurance_card_no,
+                            :arg_settle_no,
+                            :arg_his_settle_flag,
+                            :arg_insurance_bill_number
+                        )
+                        ");
+            using (OracleConnection con = OracleConnect.Connect())
+            {
+                if (con.State != ConnectionState.Open) con.Open();
+
+                OracleCommand orcCmd = new OracleCommand();
+                orcCmd.Connection = con;
+                OracleTransaction orcTr = con.BeginTransaction();
+                orcCmd.Transaction = orcTr;
+
+                try
+                {
+                    orcCmd.CommandText = sql.ToString();
+                    OracleParameter[] parInTradeLog = {
+                                      new OracleParameter("arg_trade_no", tradeNo),
+                                      new OracleParameter("arg_sick_id", sickId),
+                                      new OracleParameter("arg_residence_no", residenceNo),
+                                      new OracleParameter("arg_trade_text", ""),
+                                      new OracleParameter("arg_trade_type", tradeType),
+                                      new OracleParameter("arg_settle_mode", "1"),
+                                      new OracleParameter("arg_operator", operater),
+                                      new OracleParameter("arg_business_no", businessNo),
+                                      new OracleParameter("arg_return_text", returnText),
+                                      new OracleParameter("arg_regist_type", registType),
+                                      new OracleParameter("arg_insurance_no", insuranceNo),
+                                      new OracleParameter("arg_safety_no", safetyNo),
+                                      new OracleParameter("arg_balance_interface", balanceInterface),
+                                      new OracleParameter("arg_dept_code", deptCode),
+                                      new OracleParameter("arg_insurance_card_no", insuranceCardNo),
+                                      new OracleParameter("arg_settle_no", settleNo),
+                                      new OracleParameter("arg_his_settle_flag", hisSettleFlag),
+                                      new OracleParameter("arg_insurance_bill_number", insuranceBillNumber)
+                                                      };
+                    orcCmd.Parameters.AddRange(parInTradeLog);
+                    orcCmd.ExecuteNonQuery();
+                    orcTr.Commit();
+                }
+                catch (Exception ex)
+                {
+                    orcTr.Rollback();
+                    con.Close();
+                    errorMsg = ex.Message;
+                    Log4NetHelper.Error("生成银行交易日志", ex);
+                    return -1;
+                }
+            }
+            return 0;
+        }
+        #endregion
+
+        #region 更新交易日志
+        public int UpdateInsurTradeLog(string tradeNo, string status)
+        {
+            StringBuilder sql = new StringBuilder();
+            UtilityDAL utilityDAL = new UtilityDAL();
+
+
+            sql.Clear();
+            sql.Append(@"
+            update insur_trade_log set status = :arg_status
+             where trade_no = :arg_trade_no");
+            using (OracleConnection con = OracleConnect.Connect())
+            {
+                if (con.State != ConnectionState.Open) con.Open();
+
+                OracleCommand orcCmd = new OracleCommand();
+                orcCmd.Connection = con;
+                OracleTransaction orcTr = con.BeginTransaction();
+                orcCmd.Transaction = orcTr;
+
+                try
+                {
+                    orcCmd.CommandText = sql.ToString();
+                    OracleParameter[] parInTradeLog = {
+                                      new OracleParameter("arg_trade_no", tradeNo),
+                                      new OracleParameter("arg_status", status)
+                                                      };
+                    orcCmd.Parameters.AddRange(parInTradeLog);
+                    orcCmd.ExecuteNonQuery();
+                    orcTr.Commit();
+                    return 0;
+                }
+                catch (Exception ex)
+                {
+                    orcTr.Rollback();
+                    con.Close();
+                    Log4NetHelper.Error("生成银行交易日志", ex);
+                    return -1;
+                }
+            }
+        }
+        #endregion
 
         public int CompleteLog(string tradeNo, string returnText, DateTime bankTradeDate, string bankTradeNo)
         {

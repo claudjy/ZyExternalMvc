@@ -14,6 +14,7 @@ using Zysoft.ZyExternal.DAL.His.RemoteService;
 using System.Web.Configuration;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
+using System.Threading;
 
 namespace Zysoft.ZyExternal.DAL.His
 {
@@ -883,11 +884,19 @@ namespace Zysoft.ZyExternal.DAL.His
 
                 for (int i = 0; i < cycleNum; i++)
                 {
+                  
+
                     if (ndResponse.SelectSingleNode("DoctorInfos/DoctorInfo").Attributes["Doctor"].Value == doctor)
                     {
-                        if (docResponse.SelectSingleNode("Response/DoctorInfos/DoctorInfo").FirstChild == null)
+                        if (docResponse.SelectNodes("Response/DoctorInfos/DoctorInfo").Count == 0)
                         {
                             errorMsg = "无有效号！";
+                            registerFlag = "0";
+                            return 0;
+                        }
+                        if(docResponse.SelectSingleNode("Response/DoctorInfos/DoctorInfo").Attributes["AvailableNum"].Value == "0")
+                        {
+                            errorMsg = "当前源号无时间列表！";
                             registerFlag = "0";
                             return 0;
                         }
@@ -1173,6 +1182,7 @@ namespace Zysoft.ZyExternal.DAL.His
                     }
                 }
 
+                string registType = "";
                 string[] inList1 = tradeText.Split('^');
                 if (inList1.Length > 8)
                 {
@@ -1180,24 +1190,41 @@ namespace Zysoft.ZyExternal.DAL.His
 
                     string[] regList = inList1[7].Split('|');
                     insuranceNo = regList[0];
+                    insurApplyNo = regList[1];
+                    registType = regList[2];
                     safetyNo = regList[13];
                     insuranceCardNo = safetyNo;
                 }
 
-                string settleNo;
+                string outParmXml, settleNo;
                 if (ChargeSettle2094(visitNo, money, "0", charges, insurFund,
                       insurAccountCharges, insurHospCharges, insurBalance,
                       insurSafe, insurOfficialCharges, insuranceNo,
                       safetyNo, insuranceCardNo, tradeText, returnText,
                       businessNo, insurApplyNo, "1",
                       visitData, "", payType, bankTradeNo, empNameNo,
-                      bankDate, machineCode, out receiptNo, out settleNo, out errorMsg) < 0)
+                      bankDate, machineCode, out receiptNo, out outParmXml,
+                      out settleNo, out errorMsg) < 0)
                 {
                     elerspCode.InnerText = "0";
                     elerspMsg.InnerText = errorMsg;
                     outParm = docResponseRoot.OuterXml;
                     return -1;
                 }
+
+                StringBuilder sql = new StringBuilder();
+                if (rateType == "F")
+                {
+                    sql.Clear();
+                    sql.Append(" update dispensary_sick_cure_info " +
+                        "           set insurance_no ='"+ insuranceNo + "'," +
+                        "               safety_no = '"+ safetyNo + "'" +
+                        " where nullah_number = " + visitNo);
+                    Log4NetHelper.Info(sql);
+                    int ireturn = Update(sql.ToString(), null);
+                    Log4NetHelper.Info("更新记录数dispensary_sick_cure_info：" + ireturn.ToString());
+                }
+
 
                 XmlElement eleoutFlowId = docResponseRoot.CreateElement("outFlowId");
                 eleoutFlowId.InnerText = visitNo;
@@ -1225,7 +1252,7 @@ namespace Zysoft.ZyExternal.DAL.His
                 ndResRoot.AppendChild(eleoutReceiverNo);
 
                 XmlElement eleoutReceiver = docResponseRoot.CreateElement("outReceiver");
-                eleoutReceiver.InnerText = empNameNo.Substring(empNameNo.IndexOf('/'));
+                eleoutReceiver.InnerText = empNameNo.Substring(empNameNo.IndexOf('/')+1);
                 ndResRoot.AppendChild(eleoutReceiver);
 
                 XmlElement eleoutPatientId = docResponseRoot.CreateElement("outPatientId");
@@ -1248,7 +1275,8 @@ namespace Zysoft.ZyExternal.DAL.His
                 elerspMsg.InnerText = resultMessage;
 
                 outParm = docResponseRoot.OuterXml;
-
+                
+                errorMsg = "";
                 if (rateType == "F")
                 {
                     BankTradeLogDal bankTradeLogDal = new BankTradeLogDal();
@@ -1257,7 +1285,14 @@ namespace Zysoft.ZyExternal.DAL.His
                      decimal.Parse(insurAccountCharges) + decimal.Parse(insurHospCharges) +
                      decimal.Parse(insurSafe) + decimal.Parse(insurOfficialCharges));
                     Log4NetHelper.Info("插入医保日志中间表开始！！");
-                    bankTradeLogDal.CreateSettleInfo(registerInparm, tradeText, returnText, patientID, visitNo, rateType, lostCash);
+                    bankTradeLogDal.CreateInsurTradeLog(patientID, visitNo, empNameNo, "",
+                                departmentCode, insuranceNo, safetyNo, insuranceCardNo,
+                                rateType, registType,
+                                out errorMsg, "2210",businessNo,
+                                "", "", "", registerInparm
+                                );
+                    bankTradeLogDal.CreateSettleInfo(registerInparm, tradeText, returnText, patientID, visitNo,
+                        rateType, lostCash, settleNo);
                 }
             }
             catch (Exception ex)
@@ -1279,14 +1314,14 @@ namespace Zysoft.ZyExternal.DAL.His
                      string visitData, string sequenceNos, string payType,
                      string bankTradeNo, string empNameNo,
                      string bankDate, string machineCode,
-                     out string receiptNo, out string outParmXml,
+                     out string receiptNo, out string outParmXml, out string settleNo,
                      out string errorMsg)
         {
             UtilityDAL utilityDAL = new UtilityDAL();
 
             string clientType, tradeCode = "2094";
             clientType = "25";
-            outParmXml = receiptNo = errorMsg = "";
+            settleNo = outParmXml = receiptNo = errorMsg = "";
 
             try
             {
@@ -1427,7 +1462,7 @@ namespace Zysoft.ZyExternal.DAL.His
                     return -1;
                 }
                 receiptNo = ndResponse.SelectSingleNode("ReceiptNo").InnerText;
-
+                settleNo = ndResponse.SelectSingleNode("SettleNo").InnerText;
             }
             catch (Exception ex)
             {
@@ -1445,6 +1480,8 @@ namespace Zysoft.ZyExternal.DAL.His
             string clientType, tradeCode = "2090";
             clientType = "25";
             visitData = errorMsg = "";
+            string startDate, endDate;
+            startDate = endDate = "";
 
             try
             {
@@ -1471,6 +1508,15 @@ namespace Zysoft.ZyExternal.DAL.His
                 XmlElement eleVisitNo = docRequest.CreateElement("VisitNo");
                 eleVisitNo.InnerText = visitNo;
                 ndRequest.AppendChild(eleVisitNo);
+
+                endDate= startDate = utilityDAL.GetSysDateTime().ToString("yyyyMMdd");
+                XmlElement eleStartDate = docRequest.CreateElement("StartDate");
+                eleStartDate.InnerText = startDate;
+                ndRequest.AppendChild(eleStartDate);
+
+                XmlElement eleEndDate = docRequest.CreateElement("EndDate");
+                eleEndDate.InnerText = endDate;
+                ndRequest.AppendChild(eleEndDate);
 
                 XmlElement eleVisitType = docRequest.CreateElement("VisitType");
                 eleVisitType.InnerText = "2";
@@ -2262,6 +2308,7 @@ namespace Zysoft.ZyExternal.DAL.His
             XmlElement elerspMsg = docResponseRoot.CreateElement("rspMsg");
             ndResRoot.AppendChild(elerspMsg);
 
+            StringBuilder sql = new StringBuilder();
             try
             {
 
@@ -2308,9 +2355,6 @@ namespace Zysoft.ZyExternal.DAL.His
                 resultMessage = ndResponse.SelectSingleNode("ResultContent").InnerText;
 
 
-
-
-
                 if (resultCode != "0000")
                 {
                     elerspMsg.InnerText = resultMessage;
@@ -2328,7 +2372,8 @@ namespace Zysoft.ZyExternal.DAL.His
 
                 //第二次调用
                 XmlNode ndApplyItems = ndResponse.SelectSingleNode("ApplyItems");
-                if (SendLisBeforeSettle(ndApplyItems, out outParm) < 0)
+                SvrRmlisOracle svrRmlisOracle = new SvrRmlisOracle();
+                if (svrRmlisOracle.SendLisBeforeSettle(ndApplyItems, out outParm) < 0)
                 {
                     elerspMsg.InnerText = outParm;
                     outParm = docResponseRoot.OuterXml;
@@ -2336,6 +2381,7 @@ namespace Zysoft.ZyExternal.DAL.His
                 }
                 #region 
 
+                Thread.Sleep(1000);
                 outParm = hisWSSelfService.BankService(ndRequest.OuterXml);
                 docResponse.LoadXml(outParm);
                 ndResponse = docResponse.SelectSingleNode("Response");
@@ -2373,7 +2419,7 @@ namespace Zysoft.ZyExternal.DAL.His
                 string ICD10 = "";
                 string JBMC = "";
                 decimal preCost;
-                StringBuilder sql = new StringBuilder();
+                
                 foreach (XmlNode ndVisitInfo in ndResponse.SelectNodes("VisitInfos/VisitInfo"))
                 {
 
@@ -2446,7 +2492,7 @@ namespace Zysoft.ZyExternal.DAL.His
                             ndApplyItemPara.AppendChild(ndTemp);
 
                     }
-                    if (ndApplyItemPara.SelectNodes("ApplyItem").Count == 0) continue;
+                    if (ndApplyItemPara.SelectNodes("ApplyItem").Count == 0) continue;                    
 
                     XmlNode ndSequenceNos;
                     if (PreCost2095(residenceNo, sickId, ndApplyItemPara, out ndSequenceNos, // out sequenceNos, out djh,
@@ -2901,7 +2947,8 @@ namespace Zysoft.ZyExternal.DAL.His
 
                 inBankReturnCode = ndReqRoot.SelectSingleNode("inBankReturnCode").InnerText.Trim();
                 inBankcard = ndReqRoot.SelectSingleNode("inBankcard").InnerText.Trim();
-                money = ndReqRoot.SelectSingleNode("inCashPay").InnerText.Trim();
+                //money = ndReqRoot.SelectSingleNode("inCashPay").InnerText.Trim();
+                money = "0"; //现金补够的部分， 在这个函数之前提前调用门诊
                 rateType = ndReqRoot.SelectSingleNode("inPersonnelType").InnerText;
                 payType = ndReqRoot.SelectSingleNode("inPayMethod").InnerText;
                 empNameNo = ndReqRoot.SelectSingleNode("inReceiverNo").InnerText;
@@ -2915,7 +2962,7 @@ namespace Zysoft.ZyExternal.DAL.His
                 bankTradeNo = bankTradeNo + "|" + inBankReturnCode;//缴费订单号+银行返回码
 
 
-
+                string registType = "";
                 string[] outArray;
                 switch (rateType)
                 {
@@ -2942,6 +2989,7 @@ namespace Zysoft.ZyExternal.DAL.His
 
                             }
                         }
+                        
                         string[] inList1 = tradeText.Split('^');
                         if (inList1.Length > 8)
                         {
@@ -2949,6 +2997,8 @@ namespace Zysoft.ZyExternal.DAL.His
 
                             string[] regList = inList1[7].Split('|');
                             insuranceNo = regList[0];
+                            registType = regList[2];
+                            insurApplyNo = insuranceNo;
                             safetyNo = regList[13];
                             insuranceCardNo = safetyNo;
                         }
@@ -2964,10 +3014,12 @@ namespace Zysoft.ZyExternal.DAL.His
 
                 string cardId, admitDate, applyDeptName;
                 string patientID, receiptNo;
+                string applyDept;
                 cardId = joVisitData["PayCardNo"].ToString();
                 rateType = joVisitData["RateType"].ToString();
                 admitDate = joVisitData["AdmitDate"].ToString();
                 applyDeptName = joVisitData["ApplyDeptName"].ToString();
+                applyDept = joVisitData["ApplyDept"].ToString(); 
                 patientID = joVisitData["PatientID"].ToString();
 
 
@@ -2984,26 +3036,17 @@ namespace Zysoft.ZyExternal.DAL.His
 
 
 
-                if (rateType == "F")
-                {
-                    BankTradeLogDal bankTradeLogDal = new BankTradeLogDal();
-                    decimal lostCash = 0;
-                    lostCash = decimal.Parse(preCharge) - (decimal.Parse(charges) + decimal.Parse(insurFund) +
-                     decimal.Parse(insurAccountCharges) + decimal.Parse(insurHospCharges) +
-                     decimal.Parse(insurSafe) + decimal.Parse(insurOfficialCharges));
-                     Log4NetHelper.Info("插入医保日志中间表开始！！");
-                    bankTradeLogDal.CreateSettleInfo(registerInparm, tradeText, returnText, patientID, visitNo, rateType, lostCash);
-                }
+                
 
-                string errorMsg;
+                string errorMsg, settleNo;
                 if (ChargeSettle2094(visitNo, money, preCharge, charges, insurFund,
                       insurAccountCharges, insurHospCharges, insurBalance,
                       insurSafe, insurOfficialCharges, insuranceNo,
                       safetyNo, insuranceCardNo, tradeText, returnText,
                       businessNo, insurApplyNo, "2"/*仅结算未扣费项目*/,
                       visitData, sequenceNos, payType, bankTradeNo, empNameNo,
-                      bankDate, machineCode, out receiptNo, out string outParmXml,
-                      out errorMsg) < 0)
+                      bankDate, machineCode, out receiptNo, out string outParmXml, 
+                      out settleNo, out errorMsg) < 0)
                 {
                     elerspCode.InnerText = "0";
                     if (errorMsg.IndexOf("不等于请求总金额") > 0) errorMsg = "医保金额与实际金额不一致！";
@@ -3012,10 +3055,40 @@ namespace Zysoft.ZyExternal.DAL.His
                     return -1;
                 }
 
+                StringBuilder sql = new StringBuilder();
+                if (rateType == "F")
+                { 
+                    sql.Clear();
+                    sql.Append(" update dispensary_sick_cure_info set insurance_no = :arg_insuranceNo where nullah_number = "+ visitNo);
+                    OracleParameter[] parmInsuranceNo =
+                           {
+                                new OracleParameter("arg_insuranceNo",insuranceNo)
+                            };
+                    Update(sql.ToString(), parmInsuranceNo);
+                }
+
+                if (rateType == "F")
+                {
+                    BankTradeLogDal bankTradeLogDal = new BankTradeLogDal();
+                    decimal lostCash = 0;
+                    lostCash = decimal.Parse(preCharge) - (decimal.Parse(charges) + decimal.Parse(insurFund) +
+                     decimal.Parse(insurAccountCharges) + decimal.Parse(insurHospCharges) +
+                     decimal.Parse(insurSafe) + decimal.Parse(insurOfficialCharges));
+                    Log4NetHelper.Info("插入医保日志中间表开始！！");
+                    bankTradeLogDal.CreateInsurTradeLog(patientID, visitNo, empNameNo, "",
+                                applyDept, insuranceNo, safetyNo, insuranceCardNo,
+                                rateType, registType,
+                                out errorMsg, "2210", businessNo,
+                                "", "", "", registerInparm
+                                );
+                    bankTradeLogDal.CreateSettleInfo(registerInparm, tradeText, returnText, patientID, 
+                        visitNo, rateType, lostCash, settleNo);
+                }
+
                 XmlDocument docResponse = new XmlDocument();
                 docResponse.LoadXml(outParmXml);
                 XmlNode ndResponse = docResponse.SelectSingleNode("Response");
-                string resultCode, settleNo;
+                string resultCode;
 
                 resultCode = ndResponse.SelectSingleNode("ResultCode").InnerText;
                 settleNo = ndResponse.SelectSingleNode("SettleNo").InnerText;
@@ -3028,7 +3101,7 @@ namespace Zysoft.ZyExternal.DAL.His
                 ndResRoot.AppendChild(eleooutJfStreamno);
 
                 XmlElement eleooutFlowJfid = docResponseRoot.CreateElement("outFlowJfid");
-                eleooutFlowJfid.InnerText = settleNo;
+                eleooutFlowJfid.InnerText = visitNo;
                 ndResRoot.AppendChild(eleooutFlowJfid);
 
                 XmlElement eleoutRcptno = docResponseRoot.CreateElement("outRcptno");
@@ -3045,7 +3118,7 @@ namespace Zysoft.ZyExternal.DAL.His
                 elerspCode.InnerText = "0";
                 elerspMsg.InnerText = ex.Message;
                 outParm = docResponseRoot.OuterXml;
-                Log4NetHelper.Error("挂号", ex);
+                Log4NetHelper.Error("013 单张划价单缴费", ex);
                 return -1;
             }
             return 0;
@@ -3258,7 +3331,6 @@ namespace Zysoft.ZyExternal.DAL.His
                 Log4NetHelper.Error("PreQuene2306", ex);
                 return -1;
             }
-            return 0;
         }
 
         /// <summary>
@@ -3370,7 +3442,7 @@ namespace Zysoft.ZyExternal.DAL.His
                             applyNos.Add(applyNo);
                         }
                     }
-                   
+
                 }
                 if (applyNos.Count > 0)
                 {
