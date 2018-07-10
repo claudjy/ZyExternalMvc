@@ -535,6 +535,13 @@ namespace Zysoft.ZyExternal.DAL.His
                 {
 
                     doctorCode = ndSchedule.SelectSingleNode("DoctorCode").InnerText;
+                    //switch(doctorCode)
+                    //{
+                    //    case "23":
+                    //        continue;
+                    //    default:
+                    //        break;
+                    //}
                     doctorName = ndSchedule.SelectSingleNode("DoctorName").InnerText;
                     deptCode = ndSchedule.SelectSingleNode("DepartmentCode").InnerText;
                     deptName = ndSchedule.SelectSingleNode("DepartmentName").InnerText;
@@ -2332,6 +2339,16 @@ namespace Zysoft.ZyExternal.DAL.His
                 eleVisitType.InnerText = "1";
                 ndRequest.AppendChild(eleVisitType);
 
+                string endDate, startDate;
+                endDate = startDate = utilityDAL.GetSysDateTime().ToString("yyyyMMdd");
+                XmlElement eleStartDate = docRequest.CreateElement("StartDate");
+                eleStartDate.InnerText = startDate;
+                ndRequest.AppendChild(eleStartDate);
+
+                XmlElement eleEndDate = docRequest.CreateElement("EndDate");
+                eleEndDate.InnerText = endDate;
+                ndRequest.AppendChild(eleEndDate);
+
                 XmlElement eleBankDate = docRequest.CreateElement("BankDate");
                 eleBankDate.InnerText = DateTime.Now.ToString("yyyyMMddhhmmss");
                 ndRequest.AppendChild(eleBankDate);
@@ -2419,10 +2436,11 @@ namespace Zysoft.ZyExternal.DAL.His
                 string ICD10 = "";
                 string JBMC = "";
                 decimal preCost;
+                long days;
                 
                 foreach (XmlNode ndVisitInfo in ndResponse.SelectNodes("VisitInfos/VisitInfo"))
                 {
-
+                    days = 0;
                     insuranceDiseas = sequenceNos = djh = preNo = "";
                     preCost = 0;
                     insurApplyNo = utilityDAL.GetSequenceNO("zhiydba.jssyb_apply_no_seq").ToString();
@@ -2441,7 +2459,8 @@ namespace Zysoft.ZyExternal.DAL.His
                     if (diagnosisCode.IsNull()) diagnosisCode = "Z00.001";
 
                     sql.Clear();
-                    sql.Append(@"select t.balance_interface balance_interface
+                    sql.Append(@"select t.balance_interface balance_interface,
+                                        trunc(sysdate) - trunc( s.register_time ) days
                                    from dispensary_sick_cure_info s , rate_type_dict t
                                   where s.rate_type = t.rate_type_code
                                     and s.sick_id = :arg_sick_id
@@ -2455,7 +2474,9 @@ namespace Zysoft.ZyExternal.DAL.His
                     if (dtBalanceInterface.Rows.Count > 0)
                     {
                         balanceInterface = dtBalanceInterface.Rows[0]["balance_interface"].ToString();
+                        days = long.Parse(dtBalanceInterface.Rows[0]["days"].ToString());
                     }
+                    //if (days > 0) continue;
 
                     sql.Clear();
                     sql.Append(@"select city_insurance_code
@@ -2743,7 +2764,7 @@ namespace Zysoft.ZyExternal.DAL.His
 
                 sql.Clear();
             sql.Append(@"
-                select s.sequence_no preNo,
+                select s.apply_no preNo,
                        decode(upper(substr(s.item_class, 1, 1)),
                               'A',
                               '0',
@@ -2879,9 +2900,16 @@ namespace Zysoft.ZyExternal.DAL.His
 
             XmlNode ndVisitInfos = docPriceItems.SelectSingleNode("PriceItems");
             elePriceItems.InnerXml = ndVisitInfos.InnerXml;
-
-            elerspCode.InnerText = "0000";
-            elerspMsg.InnerText = "交易成功";
+            if (dtPriceItem.Rows.Count == 0)
+            {
+                elerspCode.InnerText = "0";
+                elerspMsg.InnerText = "没有获取到划价单明细记录，请到窗口处理！ ";
+            }
+            else
+            {
+                elerspCode.InnerText = "1";
+                elerspMsg.InnerText = "交易成功";
+            }
             outParm = ndResRoot.OuterXml;
             return 0;
         }
