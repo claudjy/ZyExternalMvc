@@ -2570,7 +2570,7 @@ namespace Zysoft.ZyExternal.DAL.His
                         JBMC = diagnosisName;
                         fphm = utilityDAL.GetSequenceNO("comm.insur_trade_seq").ToString();
                         //nhdata = "{'grbh':' ','djid':' ','sum01':' ','sum09':' ','bz':' ','sum11':' ','sum37':' ','sum38':' ','bxid':' '}";
-                        //nhdata.Replace("'", "\"");
+                        //nhdata.Replace("'", "\" ");
                         JObject jObject = new JObject();
                         jObject.Add("grbh", " ");
                         jObject.Add("djid", " ");
