@@ -2572,7 +2572,7 @@ namespace Zysoft.ZyExternal.DAL.His
                         //nhdata = "{'grbh':' ','djid':' ','sum01':' ','sum09':' ','bz':' ','sum11':' ','sum37':' ','sum38':' ','bxid':' '}";
                         //nhdata.Replace("'", "\" ");
                         JObject jObject = new JObject();
-                        jObject.Add("grbh", " ");
+                        jObject.Add("grbh", "");
                         jObject.Add("djid", " ");
                         jObject.Add("sum01", " ");
                         jObject.Add("sum09", " ");
