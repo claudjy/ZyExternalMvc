@@ -26,15 +26,6 @@ namespace Zysoft.ZyExternal.DAL.His
             serviceURL = WebConfigurationManager.AppSettings["SelfServiceURL"];
         }
 
-        public string test()
-        {
-            JObject jObject = new JObject();
-            jObject.Add("", "");
-            string json;
-            json = jObject.ToString();
-            return json;
-        }
-
         #region 000 网络测试
         public int NetTest2108(XmlDocument docRequestPre, out string outParm)
         {
@@ -2578,8 +2569,19 @@ namespace Zysoft.ZyExternal.DAL.His
                         ICD10 = diagnosisCode;
                         JBMC = diagnosisName;
                         fphm = utilityDAL.GetSequenceNO("comm.insur_trade_seq").ToString();
-                        nhdata = "{'grbh':' ','djid':' ','sum01':' ','sum09':' ','bz':' ','sum11':' ','sum37':' ','sum38':' ','bxid':' '}";
-                        nhdata.Replace("'", "\"");
+                        //nhdata = "{'grbh':' ','djid':' ','sum01':' ','sum09':' ','bz':' ','sum11':' ','sum37':' ','sum38':' ','bxid':' '}";
+                        //nhdata.Replace("'", "\"");
+                        JObject jObject = new JObject();
+                        jObject.Add("grbh", " ");
+                        jObject.Add("djid", " ");
+                        jObject.Add("sum01", " ");
+                        jObject.Add("sum09", " ");
+                        jObject.Add("bz", " ");
+                        jObject.Add("sum11", " ");
+                        jObject.Add("sum37", " ");
+                        jObject.Add("sum38", " ");
+                        jObject.Add("bxid", " ");
+                        nhdata = jObject.ToString();
                     }
 
                     sql.Clear();
