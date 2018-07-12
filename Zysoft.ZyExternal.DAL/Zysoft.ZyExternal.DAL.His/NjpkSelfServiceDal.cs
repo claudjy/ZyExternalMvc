@@ -1,20 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml;
-using System.Data.OracleClient;
-using System.Data;
-using Zysoft.FrameWork.Database;
-using Zysoft.FrameWork;
-using Zysoft.ZyExternal.DAL.Common;
-using Zysoft.FrameWork.WebService;
-using Zysoft.ZyExternal.DAL.His.RemoteService;
-using System.Web.Configuration;
+﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Data.OracleClient;
+using System.Text;
 using System.Threading;
+using System.Web.Configuration;
+using System.Xml;
+using Zysoft.FrameWork;
+using Zysoft.FrameWork.Database;
+using Zysoft.ZyExternal.DAL.Common;
+using Zysoft.ZyExternal.DAL.His.RemoteService;
 
 namespace Zysoft.ZyExternal.DAL.His
 {
@@ -27,6 +24,15 @@ namespace Zysoft.ZyExternal.DAL.His
         public NjpkSelfServiceDal()
         {
             serviceURL = WebConfigurationManager.AppSettings["SelfServiceURL"];
+        }
+
+        public string test()
+        {
+            JObject jObject = new JObject();
+            jObject.Add("", "");
+            string json;
+            json = jObject.ToString();
+            return json;
         }
 
         #region 000 网络测试
@@ -1166,41 +1172,65 @@ namespace Zysoft.ZyExternal.DAL.His
                 //    outParm = docResponseRoot.OuterXml;
                 //    return -1;
                 //}
-
-                //string siOutParam = "0095-20180502083441-982^1.0|0.5|0.0|0.0|0.0|0.5|0.0|0.0|0.5|0.0|0.0|0.5|786.6|||0.0|1.0|0.00|13||^^";
-                string[] settleList1 = returnText.Split('^');
-                if (settleList1.Length > 2)
-                {
-                    string[] settleList2 = settleList1[1].Split('|');
-                    string insur1, insur2, insur3, insur4;
-                    if (settleList2.Length > 18)
-                    {
-
-                        insur1 = settleList2[1];
-                        insur2 = settleList2[2];
-                        insur3 = settleList2[3];
-                        insur4 = settleList2[4];
-                        insurFund = (decimal.Parse(insur1) + decimal.Parse(insur2)
-                            + decimal.Parse(insur3) + decimal.Parse(insur4)).ToString();
-                        insurAccountCharges = settleList2[5];
-                        charges = settleList2[6];
-                        insurBalance = settleList2[12];
-
-                    }
-                }
-
+                
                 string registType = "";
-                string[] inList1 = tradeText.Split('^');
-                if (inList1.Length > 8)
-                {
-                    businessNo = inList1[3];
+                string nhdata, sum01, sum09, sum37, sum38, bz;
 
-                    string[] regList = inList1[7].Split('|');
-                    insuranceNo = regList[0];
-                    insurApplyNo = regList[1];
-                    registType = regList[2];
-                    safetyNo = regList[13];
-                    insuranceCardNo = safetyNo;
+                switch (rateType)
+                {
+                    case "H": //农合
+                        nhdata = ndReqRoot.SelectSingleNode("visitData").InnerText;
+                        JObject joNhdata = JObject.Parse(nhdata);
+                        safetyNo = joVisitData["grbh"].ToString();
+                        insuranceNo = joVisitData["djid"].ToString();
+                        sum01 = joVisitData["sum01"].ToString();
+                        sum09 = joVisitData["sum09"].ToString();
+                        bz = joVisitData["bz"].ToString();
+                        sum37 = joVisitData["sum37"].ToString();
+                        sum38 = joVisitData["sum38"].ToString();
+                        insurApplyNo = joVisitData["bxid"].ToString();
+                        registType = "1";
+                        insurFund = (decimal.Parse(sum01) + decimal.Parse(sum09) + decimal.Parse(sum38)).ToString();
+                        charges = (decimal.Parse(cost) - decimal.Parse(insurFund)).ToString();
+                        break;
+                    case "F"://医保
+                        //string siOutParam = "0095-20180502083441-982^1.0|0.5|0.0|0.0|0.0|0.5|0.0|0.0|0.5|0.0|0.0|0.5|786.6|||0.0|1.0|0.00|13||^^";
+                        string[] settleList1 = returnText.Split('^');
+                        if (settleList1.Length > 2)
+                        {
+                            string[] settleList2 = settleList1[1].Split('|');
+                            string insur1, insur2, insur3, insur4;
+                            if (settleList2.Length > 18)
+                            {
+
+                                insur1 = settleList2[1];
+                                insur2 = settleList2[2];
+                                insur3 = settleList2[3];
+                                insur4 = settleList2[4];
+                                insurFund = (decimal.Parse(insur1) + decimal.Parse(insur2)
+                                    + decimal.Parse(insur3) + decimal.Parse(insur4)).ToString();
+                                insurAccountCharges = settleList2[5];
+                                charges = settleList2[6];
+                                insurBalance = settleList2[12];
+
+                            }
+                        }
+
+                        string[] inList1 = tradeText.Split('^');
+                        if (inList1.Length > 8)
+                        {
+                            businessNo = inList1[3];
+
+                            string[] regList = inList1[7].Split('|');
+                            insuranceNo = regList[0];
+                            insurApplyNo = regList[1];
+                            registType = regList[2];
+                            safetyNo = regList[13];
+                            insuranceCardNo = safetyNo;
+                        }
+                        break;
+                    default://
+                        break;
                 }
 
                 string outParmXml, settleNo;
@@ -1220,7 +1250,7 @@ namespace Zysoft.ZyExternal.DAL.His
                 }
 
                 StringBuilder sql = new StringBuilder();
-                if (rateType == "F")
+                if (rateType == "F" || rateType == "H")
                 {
                     sql.Clear();
                     sql.Append(" update dispensary_sick_cure_info " +
@@ -2110,6 +2140,17 @@ namespace Zysoft.ZyExternal.DAL.His
                 {
                     balanceinterface = "0";
                 }
+                
+                string ryks = "";
+                string jzys = "";
+                string yybh = "10095";
+                string year = "";
+                string ryrq = "";
+                string ryzt = "3";  //来院状态，默认3 未愈
+                string jzlx = "1";  //就诊类型，1 门诊 2住院
+                string fprq = "";
+                string zyh = "";
+                string fphm = "";
 
                 sql.Clear();
                 if (balanceinterface != "0")
@@ -2128,14 +2169,25 @@ namespace Zysoft.ZyExternal.DAL.His
                                         ' ' ysbm,
                                         ' ' zdjbbm,
                                         c.standard_price * nvl(b.pricelist_item_number, 1) clinic_price,
-                                        e.insur_price_name OCODE,
-                                        f.item_code ICODE,
-                                        ' ' FPHM,
-                                        ' ' LB,
-                                        e.mzzfbl ZFBL,
-                                        '10095' YYBH,
-                                        ' ' ICD10,
-                                        ' ' JBMC
+                                        e.insur_price_code ocode,
+                                        e.insur_price_name oname,
+                                        f.item_code icode,
+                                        comm.insur_trade_seq.nextval fphm,
+                                        ' ' lb,
+                                        e.mzzfbl zfbl,
+                                        '10095' yybh,
+                                        ' ' icd10,
+                                        ' ' jbmc，
+                                        to_char(sysdate, 'yyyy-mm-dd') billdate,
+                                        c.standard_price * nvl(b.pricelist_item_number, 1) totalPrices,
+                                        '0.00' pricexe,
+                                        '0.00' zgxe,
+                                        ' ' ypjx,
+                                        c.item_name iname，
+                                        to_char(sysdate,'yyyy-mm-dd') fprq,
+                                        to_char(sysdate,'yyyy') year,
+                                        '3' ryzt,
+                                        '1' jzlx
                                    from clinic_pricelist_collate_dict b, 
                                         clinic_item_dict c,
                                         rate_type_dict     d,
@@ -2185,8 +2237,8 @@ namespace Zysoft.ZyExternal.DAL.His
                                     ' ' cfh,
                                     ' ' cflsh,
                                     '2' xmzl,
-                                    '' price_item_name,
-                                    '' insurance_price_item_code,
+                                    ' ' price_item_name,
+                                    ' ' insurance_price_item_code,
                                     ' ' mzlsh,
                                     ' ' yllb,
                                     ' ' ksbm,
@@ -2248,7 +2300,16 @@ namespace Zysoft.ZyExternal.DAL.His
                     itemInfoXml = itemInfoXml.Replace("YYBH", "yybh");
                     itemInfoXml = itemInfoXml.Replace("ICD10", "icd10");
                     itemInfoXml = itemInfoXml.Replace("JBMC", "jbmc");
-
+                    itemInfoXml = itemInfoXml.Replace("BILLDATE", "billdate");
+                    itemInfoXml = itemInfoXml.Replace("TOTALPRICES", "totalprices");
+                    itemInfoXml = itemInfoXml.Replace("PRICEXE", "pricexe");
+                    itemInfoXml = itemInfoXml.Replace("ZGXE", "zgxe");
+                    itemInfoXml = itemInfoXml.Replace("YPJX", "ypjx");
+                    itemInfoXml = itemInfoXml.Replace("INAME", "iname");
+                    itemInfoXml = itemInfoXml.Replace("FPRQ", "fprq");
+                    itemInfoXml = itemInfoXml.Replace("YEAR", "year");
+                    itemInfoXml = itemInfoXml.Replace("RYZT", "ryzt");
+                    itemInfoXml = itemInfoXml.Replace("JZLX", "jzlx");
                 }
 
                 XmlDocument docItemInfos = new XmlDocument();
@@ -2295,7 +2356,6 @@ namespace Zysoft.ZyExternal.DAL.His
         #region 011 获取划价单接口
         public int getPreNosInfo(XmlDocument docRequestPre, out string outParm)
         {
-            ;
 
             UtilityDAL utilityDAL = new UtilityDAL();
             XmlDocument docResponseRoot = utilityDAL.GetResponseNjpkQueryXmlDoc();
@@ -2314,7 +2374,7 @@ namespace Zysoft.ZyExternal.DAL.His
 
             XmlElement elerspMsg = docResponseRoot.CreateElement("rspMsg");
             ndResRoot.AppendChild(elerspMsg);
-
+            
             StringBuilder sql = new StringBuilder();
             try
             {
@@ -2357,8 +2417,7 @@ namespace Zysoft.ZyExternal.DAL.His
                 ndRequest.SelectSingleNode("Signature").InnerText = signature;
                 //========================================================
 
-
-
+                
 
                 HisWSSelfService hisWSSelfService = new HisWSSelfService();
                 hisWSSelfService.Url = serviceURL;
@@ -2435,6 +2494,17 @@ namespace Zysoft.ZyExternal.DAL.His
                 string balanceInterface = "";
                 string ICD10 = "";
                 string JBMC = "";
+                string ryks = "";
+                string jzys = "";
+                string yybh = "10095";
+                string year = "";
+                string ryrq = "";
+                string ryzt = "3";  //来院状态，默认3 未愈
+                string jzlx = "1";  //就诊类型，1 门诊 2住院
+                string fprq = "";
+                string zyh = "";
+                string fphm = "";
+                string nhdata = " ";
                 decimal preCost;
                 long days;
                 
@@ -2457,6 +2527,14 @@ namespace Zysoft.ZyExternal.DAL.His
                     diagnosisName = ndVisitInfo.SelectSingleNode("DiagnosisName").InnerText;
                     visitData = ndVisitInfo.SelectSingleNode("VisitData").InnerText;
                     if (diagnosisCode.IsNull()) diagnosisCode = "Z00.001";
+
+                    //农合节点赋值
+                    ryks = applyDept;
+                    jzys = doctor;
+                    year = DateTime.Now.ToString("yyyy");
+                    ryrq = admitDate;
+                    fprq = DateTime.Now.ToString("yyyy-mm-dd");
+                    zyh = residenceNo;
 
                     sql.Clear();
                     sql.Append(@"select t.balance_interface balance_interface,
@@ -2499,6 +2577,9 @@ namespace Zysoft.ZyExternal.DAL.His
                     {
                         ICD10 = diagnosisCode;
                         JBMC = diagnosisName;
+                        fphm = utilityDAL.GetSequenceNO("comm.insur_trade_seq").ToString();
+                        nhdata = "{'grbh':' ','djid':' ','sum01':' ','sum09':' ','bz':' ','sum11':' ','sum37':' ','sum38':' ','bxid':' '}";
+                        nhdata.Replace("'", "\"");
                     }
 
                     sql.Clear();
@@ -2570,6 +2651,18 @@ namespace Zysoft.ZyExternal.DAL.His
                     XmlElement eleicd10 = docResponseRoot.CreateElement("icd10");
                     XmlElement eleNhJbmc = docResponseRoot.CreateElement("jbmc");
 
+                    XmlElement eleNhryks = docResponseRoot.CreateElement("ryks");
+                    XmlElement eleNhjzys = docResponseRoot.CreateElement("jzys");
+                    XmlElement eleNhyybh = docResponseRoot.CreateElement("yybh");
+                    XmlElement eleNhYear = docResponseRoot.CreateElement("year");
+                    XmlElement eleNhryrq = docResponseRoot.CreateElement("ryrq");
+                    XmlElement eleNhryzt = docResponseRoot.CreateElement("ryzt");
+                    XmlElement eleNhjzlx = docResponseRoot.CreateElement("jzlx");
+                    XmlElement eleNhfprq = docResponseRoot.CreateElement("fprq");
+                    XmlElement eleNhzyh = docResponseRoot.CreateElement("zyh");
+                    XmlElement eleNhfphm = docResponseRoot.CreateElement("fphm");
+                    XmlElement eleNhnhdata = docResponseRoot.CreateElement("nhdata");
+
                     elepreNo.InnerText = applyNo;// djh;
                     eleregisterFlow.InnerText = residenceNo;
                     elepatientId.InnerText = sickId;
@@ -2597,6 +2690,18 @@ namespace Zysoft.ZyExternal.DAL.His
 
                     eleicd10.InnerText = ICD10;
                     eleNhJbmc.InnerText = JBMC;
+                    
+                    eleNhryks.InnerText = ryks;
+                    eleNhjzys.InnerText = jzys;
+                    eleNhyybh.InnerText = yybh;
+                    eleNhYear.InnerText = year;
+                    eleNhryrq.InnerText = ryrq;
+                    eleNhryzt.InnerText = ryzt;
+                    eleNhjzlx.InnerText = jzlx;
+                    eleNhfprq.InnerText = fprq;
+                    eleNhzyh.InnerText = zyh;
+                    eleNhfphm.InnerText = fphm;
+                    eleNhnhdata.InnerText = nhdata;
 
                     eleItem.AppendChild(elepreNo);
                     eleItem.AppendChild(eleregisterFlow);
@@ -2625,6 +2730,18 @@ namespace Zysoft.ZyExternal.DAL.His
 
                     eleItem.AppendChild(eleicd10);
                     eleItem.AppendChild(eleNhJbmc);
+                    
+                    eleItem.AppendChild(eleNhryks);
+                    eleItem.AppendChild(eleNhjzys);
+                    eleItem.AppendChild(eleNhyybh);
+                    eleItem.AppendChild(eleNhYear);
+                    eleItem.AppendChild(eleNhryrq);
+                    eleItem.AppendChild(eleNhryzt);
+                    eleItem.AppendChild(eleNhjzlx);
+                    eleItem.AppendChild(eleNhfprq);
+                    eleItem.AppendChild(eleNhzyh);
+                    eleItem.AppendChild(eleNhfphm);
+                    eleItem.AppendChild(eleNhnhdata);
 
                     eleItems.AppendChild(eleItem);
                 }
@@ -2853,8 +2970,48 @@ namespace Zysoft.ZyExternal.DAL.His
                              where d.icd10_code = 'Z00.001'
                                and d.city_insurance_code is not null
                                and rownum = 1),
-                            'Z00.001')) bzbm
-
+                            'Z00.001')) bzbm,
+                       r.insurance_price_item_code ocode,
+                       (decode(t.rate_type,
+                               'H',
+                               (select q.insur_price_name
+                                  from v_jsxnh_price_item_code q
+                                 where q.insur_price_code = r.insurance_price_item_code
+                                   and q.physic_flag = (decode(substr(s.item_class, 1, 1),
+                                                               'A',
+                                                               'Y',
+                                                               'B',
+                                                               'Y',
+                                                               'C',
+                                                               'Y',
+                                                               'N'))),
+                               ' ')) oname,
+                        s.spec spec,
+                        s.unit unit,
+                        to_char(s.operation_time,'yyyy-mm-dd') billdate,
+                       (decode(t.rate_type,
+                               'H',
+                               (select q.mzzfbl
+                                  from v_jsxnh_price_item_code q
+                                 where q.insur_price_code = r.insurance_price_item_code
+                                   and q.physic_flag = (decode(substr(s.item_class, 1, 1),
+                                                               'A',
+                                                               'Y',
+                                                               'B',
+                                                               'Y',
+                                                               'C',
+                                                               'Y',
+                                                               'N'))),
+                               ' ')) zfbl,
+                       s.cost totalPrices,
+                       '0.00' pricexe,
+                       '0.00' zgxe,
+                       s.item_code icode,
+                       (select nvl(form,'')  from physic.physic_dict_table  where physic_code = s.item_code) ypjx,
+                       s.sequence_no lsh,
+                       s.apply_doctor kfys,
+                       s.item_name iname
+        
                   from dispensary_sick_price_item s,
                        dispensary_sick_cure_info  t,
                        pricelist_dict_detail      r
@@ -2894,6 +3051,20 @@ namespace Zysoft.ZyExternal.DAL.His
             priceItemsXml = priceItemsXml.Replace("ZYYPFS", "zyypfs");
             priceItemsXml = priceItemsXml.Replace("ZXJJBS", "zxjjbs");
             priceItemsXml = priceItemsXml.Replace("BZBM", "bzbm");
+            
+            priceItemsXml = priceItemsXml.Replace("ONAME", "oname");
+            priceItemsXml = priceItemsXml.Replace("SPEC", "spec");
+            priceItemsXml = priceItemsXml.Replace("UNIT", "unit");
+            priceItemsXml = priceItemsXml.Replace("BILLDATE", "billdate");
+            priceItemsXml = priceItemsXml.Replace("ZFBL", "zfbl");
+            priceItemsXml = priceItemsXml.Replace("TOTALPRICES", "totalPrices");
+            priceItemsXml = priceItemsXml.Replace("PRICEXE", "pricexe");
+            priceItemsXml = priceItemsXml.Replace("ZGXE", "zgxe");
+            priceItemsXml = priceItemsXml.Replace("ICODE", "icode");
+            priceItemsXml = priceItemsXml.Replace("YPJX", "ypjx");
+            priceItemsXml = priceItemsXml.Replace("LSH", "lsh");
+            priceItemsXml = priceItemsXml.Replace("KFYS", "kfys");
+            priceItemsXml = priceItemsXml.Replace("INAME", "iname");
 
             XmlDocument docPriceItems = new XmlDocument();
             docPriceItems.LoadXml(priceItemsXml);
@@ -2939,6 +3110,7 @@ namespace Zysoft.ZyExternal.DAL.His
             string visitNo, empNameNo, visitData, sequenceNos, sequenceNoJson;
             empNameNo = "system";
             string preCharge;
+            string nhdata;
 
             try
             {
@@ -2992,9 +3164,25 @@ namespace Zysoft.ZyExternal.DAL.His
 
                 string registType = "";
                 string[] outArray;
+
+                string sum01, sum09, sum37, sum38, bz;
+                
                 switch (rateType)
                 {
                     case "H": //农合
+                        nhdata = ndReqRoot.SelectSingleNode("visitData").InnerText;
+                        JObject joNhdata = JObject.Parse(nhdata);
+                        safetyNo = joVisitData["grbh"].ToString();
+                        insuranceNo = joVisitData["djid"].ToString();
+                        sum01 = joVisitData["sum01"].ToString();
+                        sum09 = joVisitData["sum09"].ToString();
+                        bz = joVisitData["bz"].ToString();
+                        sum37 = joVisitData["sum37"].ToString();
+                        sum38 = joVisitData["sum38"].ToString();
+                        insurApplyNo = joVisitData["bxid"].ToString();
+                        registType = "1";
+                        insurFund = (decimal.Parse(sum01) + decimal.Parse(sum09) + decimal.Parse(sum38)).ToString();
+                        charges = (decimal.Parse(preCharge) - decimal.Parse(insurFund)).ToString();
                         break;
                     case "F"://医保
                         outArray = returnText.Split('^');
